@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(177, 108, 255, 0.15), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(0, 245, 212, 0.12), transparent 60%),
+    #0a0a14;
+  color: #f7f7ff;
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.025) 0px,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 1;
+}
+
+.neon-text-cyan {
+  color: #00f5d4;
+  text-shadow: 0 0 12px rgba(0, 245, 212, 0.7), 0 0 28px rgba(0, 245, 212, 0.35);
+}
+
+.neon-text-magenta {
+  color: #ff006e;
+  text-shadow: 0 0 12px rgba(255, 0, 110, 0.7), 0 0 28px rgba(255, 0, 110, 0.35);
+}
+
+.neon-text-yellow {
+  color: #fee440;
+  text-shadow: 0 0 12px rgba(254, 228, 64, 0.7), 0 0 28px rgba(254, 228, 64, 0.35);
+}
