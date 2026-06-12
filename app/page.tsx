@@ -5,6 +5,9 @@ import { Leaderboard } from "@/components/Leaderboard"
 import { NextKickoffBanner } from "@/components/NextKickoffBanner"
 import { StaleBadge } from "@/components/StaleBadge"
 import { RulesCard } from "@/components/RulesCard"
+import { Tabs } from "@/components/Tabs"
+import { ComingSoon } from "@/components/ComingSoon"
+import { LiveLegend } from "@/components/LiveLegend"
 
 export const dynamic = "force-dynamic"
 
@@ -19,7 +22,7 @@ export default async function Home() {
 
   return (
     <main className="relative z-10 mx-auto max-w-5xl px-6 py-12">
-      <header className="mb-10">
+      <header className="mb-8">
         <div className="text-xs uppercase tracking-[0.4em] text-white/40 font-display">
           2026 Delta Fantasy Football League
         </div>
@@ -35,11 +38,46 @@ export default async function Home() {
         </div>
       </header>
 
-      <div className="mb-8">
-        <RulesCard />
-      </div>
-
-      <Leaderboard initialSnapshot={snapshot} initialInWindow={inWindow} />
+      <Tabs
+        defaultActive="table"
+        tabs={[
+          { id: "rules", label: "Rules" },
+          { id: "table", label: "Table" },
+          { id: "fixtures", label: "Fixtures", comingSoon: true },
+          { id: "players", label: "Players", comingSoon: true },
+          { id: "power", label: "Power Rankings", comingSoon: true },
+        ]}
+        panels={{
+          rules: <RulesCard />,
+          table: (
+            <>
+              <Leaderboard
+                initialSnapshot={snapshot}
+                initialInWindow={inWindow}
+              />
+              <LiveLegend />
+            </>
+          ),
+          fixtures: (
+            <ComingSoon
+              title="Fixtures"
+              description="Upcoming and recent matches across all 12 rosters. Wiring up next."
+            />
+          ),
+          players: (
+            <ComingSoon
+              title="Players"
+              description="Each league member's deeper page — record, point log, and position history."
+            />
+          ),
+          power: (
+            <ComingSoon
+              title="Power Rankings"
+              description="Subjective rankings layered on top of the raw points table. Coming soon."
+            />
+          ),
+        }}
+      />
     </main>
   )
 }

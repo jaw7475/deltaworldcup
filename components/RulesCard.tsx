@@ -53,13 +53,6 @@ export function RulesCard() {
           Total goals scored. Extra-time goals count;{" "}
           <span className="text-white">shootout goals don&apos;t</span>.
         </Rule>
-        <Rule label="Live" accent="green">
-          <span className="inline-flex items-center gap-1.5 align-baseline">
-            <span className="inline-block size-2 rounded-full bg-neon-live shadow-neon-live animate-live-pulse" />
-            means a member has a match in progress contributing provisional
-            points.
-          </span>
-        </Rule>
       </ul>
     </section>
   )
