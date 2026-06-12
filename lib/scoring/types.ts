@@ -71,6 +71,7 @@ export type Reason =
 export interface PointEvent {
   matchId: string
   team: TeamCode
+  opponent: TeamCode
   stage: Stage
   utcKickoff: string
   points: 0 | 1 | 3

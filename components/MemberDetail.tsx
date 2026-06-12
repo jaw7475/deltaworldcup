@@ -1,13 +1,13 @@
 import { getTeam } from "@/lib/config/teams"
 import type {
-  PointEvent,
-  Reason,
   Stage,
   TeamRecord,
 } from "@/lib/scoring/types"
 import type { MemberDetail as MemberDetailData, UpcomingFixture } from "@/lib/standings/member"
+import { getMember } from "@/lib/config/members"
 import {
   getPlayersForTeam,
+  PLAYER_TIER_ORDER,
   type PlayerTier,
   type PlayerToWatch,
 } from "@/lib/config/playersToWatch"
@@ -18,6 +18,7 @@ import {
 import { Flag } from "./Flag"
 import { LiveDot } from "./LiveDot"
 import { PositionHistoryChart } from "./PositionHistoryChart"
+import { CompletedList } from "./CompletedList"
 
 interface MemberDetailProps {
   detail: MemberDetailData
@@ -31,33 +32,6 @@ const STAGE_LABEL: Record<Stage, string> = {
   SF: "SF",
   THIRD_PLACE: "3rd",
   FINAL: "Final",
-}
-
-const REASON_LABEL: Record<Reason, string> = {
-  GROUP_WIN: "Group win",
-  GROUP_DRAW: "Group draw",
-  GROUP_LOSS: "Group loss",
-  KO_WIN: "Knockout win",
-  KO_LOSS_REG: "Lost in regulation",
-  KO_LOSS_ET: "Lost in extra time",
-  KO_LOSS_PENS: "Lost on penalties",
-  LIVE_KO_TIED: "Tied — outcome pending",
-}
-
-function PointsBadge({ event }: { event: PointEvent }) {
-  const tone =
-    event.points === 3
-      ? "bg-neon-green/15 text-neon-green ring-neon-green/30"
-      : event.points === 1
-        ? "bg-neon-yellow/15 text-neon-yellow ring-neon-yellow/30"
-        : "bg-white/5 text-white/50 ring-white/15"
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-display tracking-wider ring-1 ${tone}`}
-    >
-      {event.points} pt{event.points === 1 ? "" : "s"}
-    </span>
-  )
 }
 
 const TIER_LABEL: Record<PlayerTier, string> = {
@@ -92,11 +66,44 @@ function PlayerRow({ player }: { player: PlayerToWatch }) {
   )
 }
 
-function TeamWithPlayersCard({ record }: { record: TeamRecord }) {
+function NextMatchLine({ fix }: { fix: UpcomingFixture }) {
+  const when = new Date(fix.utcKickoff).toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-display shrink-0">
+        Next
+      </span>
+      <span className="text-xs uppercase tracking-widest text-white/40">vs</span>
+      <Flag team={fix.opponent} size={20} />
+      <span className="text-xs font-display tracking-wide text-white/75">
+        {fix.opponent}
+      </span>
+      <div className="ml-auto text-right">
+        <div className="text-[10px] uppercase tracking-widest text-neon-cyan">
+          {STAGE_LABEL[fix.stage]}
+        </div>
+        <div className="text-xs text-white/60">{when}</div>
+      </div>
+    </div>
+  )
+}
+
+interface TeamWithPlayersCardProps {
+  record: TeamRecord
+  nextMatch?: UpcomingFixture
+}
+
+function TeamWithPlayersCard({ record, nextMatch }: TeamWithPlayersCardProps) {
   const t = getTeam(record.team)
   const players = getPlayersForTeam(record.team)
   return (
-    <div className="rounded-lg bg-bg-row/80 p-4 ring-1 ring-white/5">
+    <div className="rounded-lg bg-bg-row/80 p-4 ring-1 ring-white/5 flex flex-col h-full">
       <div className="flex items-center gap-3">
         <Flag team={record.team} size={32} />
         <div className="min-w-0 flex-1">
@@ -108,7 +115,7 @@ function TeamWithPlayersCard({ record }: { record: TeamRecord }) {
           </div>
         </div>
       </div>
-      <div className="mt-3 pt-3 border-t border-white/10">
+      <div className="mt-3 pt-3 border-t border-white/10 flex-1">
         {players.length === 0 ? (
           <div className="text-xs text-white/40">No featured players yet.</div>
         ) : (
@@ -119,60 +126,25 @@ function TeamWithPlayersCard({ record }: { record: TeamRecord }) {
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-function FixtureRow({ fix }: { fix: UpcomingFixture }) {
-  const when = new Date(fix.utcKickoff).toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
-  return (
-    <div className="flex items-center gap-3 rounded-lg bg-bg-row/60 px-3 py-2 ring-1 ring-white/5">
-      <Flag team={fix.team} size={22} />
-      <span className="text-xs uppercase tracking-widest text-white/40">vs</span>
-      <Flag team={fix.opponent} size={22} />
-      <div className="ml-auto text-right">
-        <div className="text-xs uppercase tracking-widest text-neon-cyan">
-          {STAGE_LABEL[fix.stage]}
-        </div>
-        <div className="text-xs text-white/60">{when}</div>
-      </div>
-    </div>
-  )
-}
-
-function PointLogRow({ event }: { event: PointEvent }) {
-  const when = new Date(event.utcKickoff).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
-  return (
-    <div className="flex items-center gap-3 rounded-lg bg-bg-row/60 px-3 py-2 ring-1 ring-white/5">
-      <Flag team={event.team} size={22} />
-      <div className="min-w-0">
-        <div className="text-sm flex items-center gap-2">
-          <span className="font-display tracking-wide">{REASON_LABEL[event.reason]}</span>
-          {event.isLive && <LiveDot title="Live — provisional" />}
-        </div>
-        <div className="mt-0.5 text-xs uppercase tracking-widest text-white/40">
-          {STAGE_LABEL[event.stage]} · {when} · {event.goalsFor} GF
-        </div>
-      </div>
-      <div className="ml-auto">
-        <PointsBadge event={event} />
+      <div className="mt-3 pt-3 border-t border-white/10">
+        {nextMatch ? (
+          <NextMatchLine fix={nextMatch} />
+        ) : (
+          <div className="text-xs text-white/40">No more scheduled matches.</div>
+        )}
       </div>
     </div>
   )
 }
 
 export function MemberDetailView({ detail }: MemberDetailProps) {
+  // `upcoming` is sorted ascending by kickoff, so the first occurrence per
+  // team is the next match for that country.
+  const nextByTeam = new Map<string, UpcomingFixture>()
+  for (const f of detail.upcoming) {
+    if (!nextByTeam.has(f.team)) nextByTeam.set(f.team, f)
+  }
+
   return (
     <div className="space-y-8">
       <header>
@@ -191,50 +163,39 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {detail.teamRecords.map((tr) => (
-            <TeamWithPlayersCard key={tr.team} record={tr} />
+            <TeamWithPlayersCard
+              key={tr.team}
+              record={tr}
+              nextMatch={nextByTeam.get(tr.team)}
+            />
           ))}
         </div>
       </section>
 
       <section>
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
-          Upcoming
+          Completed
         </h3>
-        {(() => {
-          // Just the next scheduled match per team — `upcoming` is sorted by
-          // kickoff, so the first occurrence of each team code wins.
-          const seenTeams = new Set<string>()
-          const nextPerTeam = detail.upcoming.filter((f) => {
-            if (seenTeams.has(f.team)) return false
-            seenTeams.add(f.team)
-            return true
-          })
-          if (nextPerTeam.length === 0) {
-            return <div className="text-sm text-white/50">No more scheduled matches.</div>
-          }
-          return (
-            <div className="space-y-2">
-              {nextPerTeam.map((f) => (
-                <FixtureRow key={f.matchId + f.team} fix={f} />
-              ))}
-            </div>
-          )
-        })()}
+        <CompletedList events={detail.pointLog} />
       </section>
 
       <section>
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
-          Completed
+          Top scorers
         </h3>
-        {detail.pointLog.length === 0 ? (
-          <div className="text-sm text-white/50">No matches played yet.</div>
-        ) : (
-          <div className="space-y-2">
-            {detail.pointLog.map((e, i) => (
-              <PointLogRow key={`${e.matchId}-${e.team}-${i}`} event={e} />
-            ))}
-          </div>
-        )}
+        {(() => {
+          const scorers = strawmanTopScorers(detail.memberId)
+          if (scorers.length === 0) {
+            return <div className="text-sm text-white/50">No goals yet.</div>
+          }
+          return (
+            <div className="space-y-2">
+              {scorers.map((s) => (
+                <ScorerRow key={`${s.team}-${s.name}`} scorer={s} />
+              ))}
+            </div>
+          )
+        })()}
       </section>
 
       <section>
@@ -251,6 +212,83 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
       </section>
     </div>
   )
+}
+
+interface StrawmanScorer {
+  name: string
+  team: string
+  position: PlayerToWatch["position"]
+  tier: PlayerTier
+  goals: number
+}
+
+function ScorerRow({ scorer }: { scorer: StrawmanScorer }) {
+  const t = getTeam(scorer.team)
+  return (
+    <div className="flex items-center gap-3 rounded-lg bg-bg-row/60 px-3 py-2 ring-1 ring-white/5">
+      <Flag team={scorer.team} size={22} />
+      <div className="min-w-0">
+        <div className="text-sm text-white/85 truncate">{scorer.name}</div>
+        <div className="mt-0.5 text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
+          {t?.name ?? scorer.team} · {scorer.position}
+        </div>
+      </div>
+      <div className="ml-auto flex items-center gap-1.5">
+        <span className="font-display text-lg tabular-nums text-white/85">
+          {scorer.goals}
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
+          G
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// Strawman top-scorers — until the Match model carries goalscorer data, we
+// fake it from the players-to-watch list. Pick up to 4 high-tier attacking
+// players across the member's roster and assign deterministic goal counts.
+// Replace with real aggregation over Match.goals once that lands.
+function strawmanTopScorers(memberId: string): StrawmanScorer[] {
+  const member = getMember(memberId)
+  if (!member) return []
+
+  const TIER_RANK: Record<PlayerTier, number> = PLAYER_TIER_ORDER.reduce(
+    (acc, t, i) => {
+      acc[t] = i
+      return acc
+    },
+    {} as Record<PlayerTier, number>
+  )
+
+  // Attacking-leaning candidates from the full roster, ordered by tier.
+  const candidates: PlayerToWatch[] = []
+  for (const team of member.teams) {
+    for (const p of getPlayersForTeam(team)) {
+      if (p.position === "FW" || p.position === "MF") candidates.push(p)
+    }
+  }
+  candidates.sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier])
+
+  const rng = mulberry32(hashString(`scorers:${memberId}`))
+  const out: StrawmanScorer[] = []
+  for (const p of candidates) {
+    if (out.length >= 4) break
+    // Higher tier → higher probability they've already scored + more goals.
+    const tierRank = TIER_RANK[p.tier]
+    const scoreProb = [0.9, 0.75, 0.5, 0.3, 0.15][tierRank] ?? 0.1
+    if (rng() > scoreProb) continue
+    const maxGoals = [3, 3, 2, 2, 1][tierRank] ?? 1
+    const goals = 1 + Math.floor(rng() * maxGoals)
+    out.push({
+      name: p.name,
+      team: p.team,
+      position: p.position,
+      tier: p.tier,
+      goals,
+    })
+  }
+  return out.sort((a, b) => b.goals - a.goals)
 }
 
 // Strawman position history — used while the tournament hasn't generated

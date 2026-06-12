@@ -134,6 +134,7 @@ function basePointEvent(
   return {
     matchId: match.id,
     team,
+    opponent: match.home === team ? match.away : match.home,
     stage: match.stage,
     utcKickoff: match.utcKickoff,
     points,
