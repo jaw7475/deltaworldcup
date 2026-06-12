@@ -7,6 +7,12 @@ export interface Member {
   teams: [TeamCode, TeamCode, TeamCode, TeamCode]
   /** Optional accent color for the row glow. Defaults to neon cyan. */
   accentColor?: string
+  /**
+   * Sleeper user_id for this member. Used by the Draft Board tab to map
+   * the World Cup standings → Sleeper roster slots and to follow traded picks.
+   * Leave the placeholder if unknown; the board will fall back to standings-only.
+   */
+  sleeperUserId?: string
 }
 
 /**
@@ -20,72 +26,84 @@ export const MEMBERS: readonly Member[] = [
     displayName: "Matt",
     teams: ["ENG", "JPN", "EGY", "UZB"],
     accentColor: "#00f5d4",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_matt",
   },
   {
     id: "zach-m",
     displayName: "Zach M",
     teams: ["BRA", "USA", "ALG", "RSA"],
     accentColor: "#fee440",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_zach-m",
   },
   {
     id: "josh-g-andrew-b",
     displayName: "Josh G / Andrew B",
     teams: ["ESP", "SEN", "PAR", "KSA"],
     accentColor: "#ff006e",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_josh-g-andrew-b",
   },
   {
     id: "jesse",
     displayName: "Jesse",
     teams: ["COL", "IRN", "SWE", "IRQ"],
     accentColor: "#b16cff",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_jesse",
   },
   {
     id: "spencer",
     displayName: "Spencer",
     teams: ["NED", "TUR", "COD", "QAT"],
     accentColor: "#9bff66",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_spencer",
   },
   {
     id: "jake",
     displayName: "Jake",
     teams: ["GER", "AUT", "CAN", "CPV"],
     accentColor: "#7dd3fc",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_jake",
   },
   {
     id: "zach-d",
     displayName: "Zach D",
     teams: ["FRA", "SUI", "NOR", "CUW"],
     accentColor: "#00f5d4",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_zach-d",
   },
   {
     id: "josh-w",
     displayName: "Josh W",
     teams: ["CRO", "URU", "CZE", "BIH"],
     accentColor: "#fee440",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_josh-w",
   },
   {
     id: "danny",
     displayName: "Danny",
     teams: ["ARG", "MEX", "PAN", "NZL"],
     accentColor: "#ff006e",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_danny",
   },
   {
     id: "zach-f",
     displayName: "Zach F",
     teams: ["MAR", "ECU", "SCO", "JOR"],
     accentColor: "#b16cff",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_zach-f",
   },
   {
     id: "dan",
     displayName: "Dan",
     teams: ["POR", "KOR", "TUN", "GHA"],
     accentColor: "#9bff66",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_dan",
   },
   {
     id: "andrew-s",
     displayName: "Andrew S",
     teams: ["BEL", "AUS", "CIV", "HAI"],
     accentColor: "#7dd3fc",
+    sleeperUserId: "TODO_SLEEPER_USER_ID_andrew-s",
   },
 ] as const
 
@@ -97,6 +115,12 @@ export function getMember(id: string): Member | undefined {
 
 export function getMemberForTeam(team: TeamCode): Member | undefined {
   return MEMBERS.find((m) => m.teams.includes(team))
+}
+
+export function getMemberBySleeperUserId(
+  sleeperUserId: string
+): Member | undefined {
+  return MEMBERS.find((m) => m.sleeperUserId === sleeperUserId)
 }
 
 // Build-time integrity check:

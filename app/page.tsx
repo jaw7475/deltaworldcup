@@ -2,6 +2,7 @@ import { readCurrentStandings, readMatches, readSyncStatus } from "@/lib/standin
 import { isInWindow, nextKickoff } from "@/lib/windows/windows"
 import { SCHEDULE } from "@/lib/config/schedule"
 import { MEMBERS } from "@/lib/config/members"
+import { loadDraftBoardData } from "@/lib/draft/load"
 import { Leaderboard } from "@/components/Leaderboard"
 import { NextKickoffBanner } from "@/components/NextKickoffBanner"
 import { StaleBadge } from "@/components/StaleBadge"
@@ -10,15 +11,17 @@ import { Tabs } from "@/components/Tabs"
 import { LiveLegend } from "@/components/LiveLegend"
 import { FixturesGrid } from "@/components/FixturesGrid"
 import { PowerRankings } from "@/components/PowerRankings"
+import { DraftBoard } from "@/components/DraftBoard"
 
 export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const now = new Date()
-  const [snapshot, sync, matches] = await Promise.all([
+  const [snapshot, sync, matches, draftBoardData] = await Promise.all([
     readCurrentStandings(),
     readSyncStatus(),
     readMatches(),
+    loadDraftBoardData(),
   ])
   const inWindow = isInWindow(now, SCHEDULE)
   const next = nextKickoff(now, SCHEDULE)
@@ -47,6 +50,7 @@ export default async function Home() {
           { id: "rules", label: "Rules" },
           { id: "table", label: "Table" },
           { id: "fixtures", label: "Fixtures" },
+          { id: "draft", label: "Draft Board" },
           { id: "power", label: "Power Rankings" },
         ]}
         panels={{
@@ -63,6 +67,7 @@ export default async function Home() {
           fixtures: (
             <FixturesGrid members={MEMBERS} matches={matches ?? []} />
           ),
+          draft: <DraftBoard initialData={draftBoardData} />,
           power: <PowerRankings />,
         }}
       />
