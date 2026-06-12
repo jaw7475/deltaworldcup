@@ -14,6 +14,20 @@ async function fetchRaw(matchId: string): Promise<unknown> {
   return res.json()
 }
 
+async function fetchScorers(): Promise<unknown> {
+  const token = process.env.FOOTBALL_DATA_TOKEN
+  if (!token) return { error: "no FOOTBALL_DATA_TOKEN env" }
+  const res = await fetch(
+    "https://api.football-data.org/v4/competitions/WC/scorers?limit=100",
+    {
+      headers: { "X-Auth-Token": token },
+      cache: "no-store",
+    }
+  )
+  if (!res.ok) return { status: res.status, statusText: res.statusText }
+  return res.json()
+}
+
 export const dynamic = "force-dynamic"
 
 // Temporary diagnostic — surfaces the goal store + a raw provider fetch for the
@@ -40,15 +54,17 @@ export async function GET(request: Request) {
   if (probe && finished.length > 0) {
     const match = finished[0]
     try {
-      const [detail, raw] = await Promise.all([
+      const [detail, raw, scorers] = await Promise.all([
         getProvider().fetchMatchDetail(match.id),
         fetchRaw(match.id),
+        fetchScorers(),
       ])
       probeResult = {
         matchId: match.id,
         teams: `${match.home} vs ${match.away}`,
         detail,
         raw,
+        scorers,
       }
     } catch (err) {
       probeResult = {
