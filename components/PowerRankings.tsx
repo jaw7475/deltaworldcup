@@ -113,7 +113,7 @@ function UpdatedAtLine({ when }: { when: string }) {
   return (
     <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/45 font-display">
       <span className="inline-block size-1.5 rounded-full bg-neon-cyan shadow-neon-cyan" />
-      Updated {formatted} · refreshes daily
+      Updated {formatted} · refreshes daily at 9am ET
     </div>
   )
 }
