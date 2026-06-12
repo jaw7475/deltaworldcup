@@ -127,11 +127,17 @@ function TeamWithPlayersCard({ record, nextMatch }: TeamWithPlayersCardProps) {
         )}
       </div>
       <div className="mt-3 pt-3 border-t border-white/10">
-        {nextMatch ? (
-          <NextMatchLine fix={nextMatch} />
-        ) : (
-          <div className="text-xs text-white/40">No more scheduled matches.</div>
-        )}
+        <div className="min-h-[36px] flex items-center">
+          {nextMatch ? (
+            <div className="w-full">
+              <NextMatchLine fix={nextMatch} />
+            </div>
+          ) : (
+            <span className="text-xs text-white/40">
+              No more scheduled matches.
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -152,18 +158,18 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
           {detail.displayName}
           {detail.hasLiveMatch && <LiveDot />}
         </h2>
-        <div className="mt-4 flex items-center gap-5 sm:gap-7">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-4xl sm:text-5xl tabular-nums neon-text-cyan leading-none">
+        <div className="mt-3 flex items-center gap-4 sm:gap-5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display text-xl sm:text-2xl tabular-nums text-white leading-none">
               {detail.totalPoints}
             </span>
             <span className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-display">
               pts
             </span>
           </div>
-          <span className="h-9 w-px bg-white/15" aria-hidden />
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-4xl sm:text-5xl tabular-nums text-white leading-none">
+          <span className="h-5 w-px bg-white/15" aria-hidden />
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display text-xl sm:text-2xl tabular-nums text-white leading-none">
               {detail.totalGoalsFor}
             </span>
             <span className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-display">
