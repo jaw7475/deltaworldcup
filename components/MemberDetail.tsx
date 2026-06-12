@@ -4,10 +4,8 @@ import type {
   TeamRecord,
 } from "@/lib/scoring/types"
 import type { MemberDetail as MemberDetailData, UpcomingFixture } from "@/lib/standings/member"
-import type { TopScorerRow } from "@/lib/standings/goals"
 import {
   getPlayersForTeam,
-  PLAYERS_TO_WATCH,
   type PlayerTier,
   type PlayerToWatch,
 } from "@/lib/config/playersToWatch"
@@ -16,6 +14,7 @@ import { LiveDot } from "./LiveDot"
 import { LocalDateTime } from "./LocalDateTime"
 import { PositionHistoryChart } from "./PositionHistoryChart"
 import { CompletedList } from "./CompletedList"
+import { TopScorersList } from "./TopScorersList"
 
 interface MemberDetailProps {
   detail: MemberDetailData
@@ -206,15 +205,7 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
           Top scorers
         </h3>
-        {detail.topScorers.length === 0 ? (
-          <div className="text-sm text-white/50">No goals yet.</div>
-        ) : (
-          <div className="space-y-2">
-            {detail.topScorers.slice(0, 8).map((s) => (
-              <ScorerRow key={`${s.team}-${s.name}`} scorer={s} />
-            ))}
-          </div>
-        )}
+        <TopScorersList scorers={detail.topScorers} />
       </section>
 
       <section>
@@ -230,43 +221,6 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
         />
       </section>
     </div>
-  )
-}
-
-function ScorerRow({ scorer }: { scorer: TopScorerRow }) {
-  const t = getTeam(scorer.team)
-  const meta = lookupPlayerMeta(scorer.name, scorer.team)
-  return (
-    <div className="flex items-center gap-3 rounded-lg bg-bg-row/60 px-3 py-2 ring-1 ring-white/5">
-      <Flag team={scorer.team} size={22} />
-      <div className="min-w-0">
-        <div className="text-sm text-white/85 truncate">{scorer.name}</div>
-        <div className="mt-0.5 text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
-          {t?.name ?? scorer.team}
-          {meta?.position ? ` · ${meta.position}` : ""}
-        </div>
-      </div>
-      <div className="ml-auto flex items-center gap-1.5">
-        <span className="font-display text-lg tabular-nums text-white/85">
-          {scorer.goals}
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
-          G
-        </span>
-      </div>
-    </div>
-  )
-}
-
-// Best-effort metadata: the goal feed gives "Lionel Messi", PLAYERS_TO_WATCH
-// has position/tier under the same name. Case-insensitive match — names that
-// don't appear on the watch list just render without position.
-function lookupPlayerMeta(name: string, team: string): PlayerToWatch | null {
-  const normalized = name.toLowerCase()
-  return (
-    PLAYERS_TO_WATCH.find(
-      (p) => p.team === team && p.name.toLowerCase() === normalized
-    ) ?? null
   )
 }
 
