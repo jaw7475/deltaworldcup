@@ -16,6 +16,15 @@ import {
 const HOURLY_OUTSIDE_WINDOW_MS = 60 * 60 * 1000
 
 export async function GET(request: Request) {
+  // Auth optional so local dev (no CRON_SECRET in env) can still hit this endpoint.
+  const expected = process.env.CRON_SECRET
+  if (expected) {
+    const auth = request.headers.get("authorization")
+    if (auth !== `Bearer ${expected}`) {
+      return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 })
+    }
+  }
+
   const now = new Date()
   await recordSyncRun(now)
 
