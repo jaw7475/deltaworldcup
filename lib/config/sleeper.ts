@@ -6,7 +6,7 @@
  * actual league ID before deploying.
  */
 export const SLEEPER_LEAGUE_ID =
-  process.env.SLEEPER_LEAGUE_ID ?? "REPLACE_WITH_SLEEPER_LEAGUE_ID"
+  process.env.SLEEPER_LEAGUE_ID ?? "1212820218364035072"
 
 /** The rookie draft season the Draft Board tab visualises. */
 export const DRAFT_SEASON = "2026"
