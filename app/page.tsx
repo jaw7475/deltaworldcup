@@ -4,6 +4,7 @@ import { SCHEDULE } from "@/lib/config/schedule"
 import { Leaderboard } from "@/components/Leaderboard"
 import { NextKickoffBanner } from "@/components/NextKickoffBanner"
 import { StaleBadge } from "@/components/StaleBadge"
+import { RulesCard } from "@/components/RulesCard"
 
 export const dynamic = "force-dynamic"
 
@@ -25,13 +26,6 @@ export default async function Home() {
         <h1 className="mt-3 font-display text-5xl md:text-6xl neon-text-cyan tracking-widest uppercase">
           Delta World Cup
         </h1>
-        <p className="mt-3 text-white/60 max-w-2xl">
-          Live draft-order leaderboard. Most points wins the #1 overall pick.
-          Tiebreaker: total goals scored (extra-time goals count, shootout goals
-          don&apos;t). The
-          <span className="mx-1 inline-block size-2 rounded-full bg-neon-live shadow-neon-live align-middle" />
-          dot means a member has a live match factoring into their points.
-        </p>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <NextKickoffBanner
             nextKickoff={next?.utcKickoff ?? null}
@@ -40,6 +34,10 @@ export default async function Home() {
           <StaleBadge lastSuccessAt={sync.lastSuccessAt} />
         </div>
       </header>
+
+      <div className="mb-8">
+        <RulesCard />
+      </div>
 
       <Leaderboard initialSnapshot={snapshot} initialInWindow={inWindow} />
     </main>
