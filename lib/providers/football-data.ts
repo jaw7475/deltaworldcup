@@ -1,6 +1,6 @@
 import { z } from "zod"
 import type { Match, Stage, MatchStatus } from "@/lib/scoring/types"
-import type { FootballDataProvider } from "./types"
+import type { FootballDataProvider, MatchDetail, GoalEvent } from "./types"
 
 const BASE = "https://api.football-data.org/v4"
 
@@ -42,6 +42,31 @@ const matchSchema = z.object({
 
 const responseSchema = z.object({
   matches: z.array(matchSchema),
+})
+
+const goalSchema = z.object({
+  minute: z.number().nullable().optional(),
+  injuryTime: z.number().nullable().optional(),
+  type: z.string().optional(),
+  team: z
+    .object({
+      tla: z.string().nullable().optional(),
+      shortName: z.string().nullable().optional(),
+    })
+    .optional(),
+  scorer: z
+    .object({
+      name: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+})
+
+const matchDetailResponseSchema = z.object({
+  id: z.number(),
+  homeTeam: teamSchema,
+  awayTeam: teamSchema,
+  goals: z.array(goalSchema).optional(),
 })
 
 // football-data.org sends ISO 3166-1 alpha-3 codes; we use FIFA codes. The two
@@ -159,5 +184,35 @@ export class FootballDataApiProvider implements FootballDataProvider {
         winner,
       }
     })
+  }
+
+  async fetchMatchDetail(matchId: string): Promise<MatchDetail> {
+    const res = await fetch(`${BASE}/matches/${matchId}`, {
+      headers: { "X-Auth-Token": this.token },
+      cache: "no-store",
+    })
+    if (!res.ok) {
+      throw new Error(
+        `football-data match detail: ${res.status} ${res.statusText} — id=${matchId}`
+      )
+    }
+    const json = await res.json()
+    const parsed = matchDetailResponseSchema.parse(json)
+    const goals: GoalEvent[] = []
+    for (const g of parsed.goals ?? []) {
+      const rawTla = g.team?.tla ?? g.team?.shortName ?? ""
+      const team = TLA_REMAP[rawTla] ?? rawTla
+      const scorer = g.scorer?.name ?? "(unknown)"
+      const minute = g.minute ?? 0
+      const type = (g.type ?? "").toUpperCase()
+      goals.push({
+        team,
+        scorer,
+        minute,
+        isOwnGoal: type === "OWN" || type === "OWN_GOAL",
+        isPenalty: type === "PENALTY",
+      })
+    }
+    return { matchId: String(parsed.id), goals }
   }
 }

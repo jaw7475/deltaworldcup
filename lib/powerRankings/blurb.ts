@@ -1,7 +1,11 @@
 import { z } from "zod"
 import { MEMBERS } from "@/lib/config/members"
+import { getPlayersForTeam, type PlayerToWatch } from "@/lib/config/playersToWatch"
 import type { MemberXPts } from "./expectedPoints"
 import type { MemberResultsSinceLast } from "./resultsSinceLast"
+import type { MatchBoxScore } from "./boxScores"
+import { formatBoxScore } from "./boxScores"
+import type { TeamCode } from "@/lib/scoring/types"
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 const MODEL = "claude-haiku-4-5-20251001"
@@ -26,6 +30,10 @@ export interface BlurbInput {
   bankedPoints: number
   remainingXPts: number
   resultsSinceLast: string
+  /** PLAYERS_TO_WATCH entries for the member's 4 teams. */
+  roster: { team: TeamCode; players: PlayerToWatch[] }[]
+  /** Box-score lines for this member's matches that finished since last refresh. */
+  boxScoreLines: string[]
 }
 
 export interface BlurbWriter {
@@ -47,12 +55,18 @@ Hard rules:
 - NEVER use "stay tuned", "anything is possible", "watch this space", "rollercoaster", "Cinderella story", "wild ride".
 - Exactly 4 sentences per blurb. Count them before responding.
 
+Grounding rules — VERY IMPORTANT, to avoid factually wrong references:
+- For each member, a Roster section lists notable current players per team. When naming a player you MUST use only names from (a) that member's Roster section OR (b) the Recent box scores section below.
+- Players from box scores are fair game even if they are NOT in the Roster section — anyone who actually scored in a recent match can be named.
+- Do NOT pull player names from memory (no Benzema-on-France, no retired-Čech-on-Czechia, etc.). If unsure whether a name fits, omit it and lean on team-level commentary instead.
+- For box scores, you can quote specific goals and minutes (e.g., "Son's 67th-minute clincher", "Schick's stoppage-time consolation"). Match the minute exactly as given.
+
 Critical: respond with VALID JSON only — no preamble, no markdown fence — matching the schema {"blurbs": [{"memberId": "<id>", "blurb": "<text>"}, ...]}. Include every memberId you were given, no extras.`
 
 function buildUserPrompt(inputs: BlurbInput[]): string {
   const lines: string[] = []
   lines.push(
-    `Write a 2–3 sentence power-ranking blurb for each of these ${inputs.length} members. Return JSON {"blurbs":[...]}. Include every memberId.`
+    `Write a 4-sentence power-ranking blurb for each of these ${inputs.length} members. Return JSON {"blurbs":[...]}. Include every memberId.`
   )
   lines.push("")
   for (const m of inputs) {
@@ -69,6 +83,25 @@ function buildUserPrompt(inputs: BlurbInput[]): string {
       `Expected points: ${m.expectedPoints.toFixed(1)} (banked ${m.bankedPoints}, projected from remaining matches ${m.remainingXPts.toFixed(1)})`
     )
     lines.push(`Results since last refresh: ${m.resultsSinceLast || "none"}`)
+    lines.push("Roster (allowed player names):")
+    for (const r of m.roster) {
+      if (r.players.length === 0) {
+        lines.push(`  ${r.team}: (no notable players listed — refer to team only)`)
+      } else {
+        const names = r.players
+          .map((p) => `${p.name} (${p.position}, ${p.tier})`)
+          .join(", ")
+        lines.push(`  ${r.team}: ${names}`)
+      }
+    }
+    if (m.boxScoreLines.length > 0) {
+      lines.push("Recent box scores (scorers in these are also fair to name):")
+      for (const line of m.boxScoreLines) {
+        lines.push(`  ${line}`)
+      }
+    } else {
+      lines.push("Recent box scores: none since last refresh")
+    }
     lines.push("")
   }
   return lines.join("\n")
@@ -133,6 +166,7 @@ export function buildBlurbInputs(args: {
   rankings: Map<string, number>
   previousRankings: Map<string, number> | null
   resultsByMember: Map<string, MemberResultsSinceLast>
+  boxScores: MatchBoxScore[]
 }): BlurbInput[] {
   const inputs: BlurbInput[] = []
   for (const member of MEMBERS) {
@@ -142,6 +176,15 @@ export function buildBlurbInputs(args: {
     const prevRank = args.previousRankings?.get(member.id) ?? null
     const delta = prevRank == null ? 0 : prevRank - rank
     const results = args.resultsByMember.get(member.id)
+    const roster = member.teams.map((team) => ({
+      team,
+      players: getPlayersForTeam(team),
+    }))
+    const memberTeamSet = new Set<TeamCode>(member.teams as readonly TeamCode[])
+    const memberBoxScores = args.boxScores.filter(
+      (b) => memberTeamSet.has(b.home) || memberTeamSet.has(b.away)
+    )
+    const boxScoreLines = memberBoxScores.map(formatBoxScore)
     inputs.push({
       memberId: member.id,
       displayName: member.displayName,
@@ -153,6 +196,8 @@ export function buildBlurbInputs(args: {
       bankedPoints: x.bankedPoints,
       remainingXPts: x.remainingGroupXPts + x.koXPts,
       resultsSinceLast: results?.formatted ?? "",
+      roster,
+      boxScoreLines,
     })
   }
   return inputs

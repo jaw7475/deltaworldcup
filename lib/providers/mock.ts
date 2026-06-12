@@ -1,5 +1,5 @@
 import type { Match, MatchStatus, Score, TeamCode } from "@/lib/scoring/types"
-import type { FootballDataProvider } from "./types"
+import type { FootballDataProvider, MatchDetail } from "./types"
 import { SCHEDULE } from "@/lib/config/schedule"
 import { TEAMS } from "@/lib/config/teams"
 
@@ -22,6 +22,10 @@ export class MockProvider implements FootballDataProvider {
     if (this.fixtureSet === "liveDemo") return liveDemo()
     if (this.fixtureSet === "fullDemo") return fullDemo()
     return scheduledOnly()
+  }
+
+  async fetchMatchDetail(matchId: string): Promise<MatchDetail> {
+    return { matchId, goals: [] }
   }
 }
 
