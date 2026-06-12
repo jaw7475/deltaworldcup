@@ -30,7 +30,7 @@ const DEFAULT_END = "2026-07-20"
 
 const MEMBER_COL_PX = 156
 const FLAG_COL_PX = 48
-const DATE_COL_PX = 72
+const DATE_COL_PX = 80
 const TEAM_ROW_PX = 60
 
 export function FixturesGrid({
