@@ -1,3 +1,6 @@
+"use client"
+
+import { useMemo } from "react"
 import type { Match, TeamCode } from "@/lib/scoring/types"
 import type { Member } from "@/lib/config/members"
 import {
@@ -7,6 +10,7 @@ import {
   indexFixturesByTeamAndDate,
   makeDateRange,
 } from "@/lib/standings/fixtures"
+import { formatLocal, todayLocalDateKey, useUserTimeZone } from "@/lib/time/local"
 import { getTeam } from "@/lib/config/teams"
 import { Flag } from "./Flag"
 import { FixtureCell } from "./FixtureCell"
@@ -19,8 +23,10 @@ interface FixturesGridProps {
   rangeEnd?: string
 }
 
-const DEFAULT_START = "2026-06-11"
-const DEFAULT_END = "2026-07-19"
+// Tournament range padded by a day on each side so matches near the edges
+// can't fall off the grid when a viewer's local date differs from UTC.
+const DEFAULT_START = "2026-06-10"
+const DEFAULT_END = "2026-07-20"
 
 const MEMBER_COL_PX = 220
 const FLAG_COL_PX = 56
@@ -33,13 +39,23 @@ export function FixturesGrid({
   rangeStart = DEFAULT_START,
   rangeEnd = DEFAULT_END,
 }: FixturesGridProps) {
-  const sortedMembers = [...members].sort((a, b) =>
-    a.displayName.localeCompare(b.displayName)
+  const timeZone = useUserTimeZone()
+
+  const sortedMembers = useMemo(
+    () =>
+      [...members].sort((a, b) => a.displayName.localeCompare(b.displayName)),
+    [members]
   )
-  const dates = makeDateRange(new Date(rangeStart), new Date(rangeEnd))
-  const fixtureIndex = indexFixturesByTeamAndDate(matches)
+  const dates = useMemo(
+    () => makeDateRange(new Date(rangeStart), new Date(rangeEnd)),
+    [rangeStart, rangeEnd]
+  )
+  const fixtureIndex = useMemo(
+    () => indexFixturesByTeamAndDate(matches, timeZone),
+    [matches, timeZone]
+  )
+  const todayIso = todayLocalDateKey(timeZone)
   const totalWidth = MEMBER_COL_PX + FLAG_COL_PX + dates.length * DATE_COL_PX
-  const todayIso = new Date().toISOString().slice(0, 10)
   const todayIndex = dates.indexOf(todayIso)
   const todayLeft =
     todayIndex >= 0
@@ -60,6 +76,7 @@ export function FixturesGrid({
                 matches={matches}
                 fixtureIndex={fixtureIndex}
                 todayLeft={todayLeft}
+                timeZone={timeZone}
               />
             ))}
           </div>
@@ -137,12 +154,14 @@ function MemberBlock({
   matches,
   fixtureIndex,
   todayLeft,
+  timeZone,
 }: {
   member: Member
   dates: string[]
   matches: Match[]
   fixtureIndex: Map<TeamCode, Map<string, Match>>
   todayLeft: number | null
+  timeZone?: string
 }) {
   const next = findNextFixture(matches, member.teams)
 
@@ -162,7 +181,11 @@ function MemberBlock({
         <div className="font-display text-base tracking-wide truncate">
           {member.displayName}
         </div>
-        <NextFixtureLine match={next} ownTeams={member.teams} />
+        <NextFixtureLine
+          match={next}
+          ownTeams={member.teams}
+          timeZone={timeZone}
+        />
       </div>
 
       {/* Right side: 4 team rows */}
@@ -174,6 +197,7 @@ function MemberBlock({
             dates={dates}
             fixtureIndex={fixtureIndex}
             isFirstTeam={i === 0}
+            timeZone={timeZone}
           />
         ))}
       </div>
@@ -184,9 +208,11 @@ function MemberBlock({
 function NextFixtureLine({
   match,
   ownTeams,
+  timeZone,
 }: {
   match: Match | null
   ownTeams: readonly TeamCode[]
+  timeZone?: string
 }) {
   if (!match) {
     return (
@@ -200,13 +226,16 @@ function NextFixtureLine({
     : "away"
   const ownTeam = ownSide === "home" ? match.home : match.away
   const opp = ownSide === "home" ? match.away : match.home
-  const kickoff = new Date(match.utcKickoff)
-  const when = kickoff.toLocaleString(undefined, {
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
+  const when = formatLocal(
+    match.utcKickoff,
+    {
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    },
+    timeZone
+  )
   return (
     <div className="mt-2 flex flex-col gap-1">
       <div className="text-[11px] uppercase tracking-[0.25em] text-white/50 font-display">
@@ -228,11 +257,13 @@ function TeamRow({
   dates,
   fixtureIndex,
   isFirstTeam,
+  timeZone,
 }: {
   team: TeamCode
   dates: string[]
   fixtureIndex: Map<TeamCode, Map<string, Match>>
   isFirstTeam: boolean
+  timeZone?: string
 }) {
   const t = getTeam(team)
   const dateMap = fixtureIndex.get(team)
@@ -266,7 +297,7 @@ function TeamRow({
             style={{ width: DATE_COL_PX, minWidth: DATE_COL_PX }}
             className="border-r border-white/5"
           >
-            <FixtureCell data={data} />
+            <FixtureCell data={data} timeZone={timeZone} />
           </div>
         )
       })}

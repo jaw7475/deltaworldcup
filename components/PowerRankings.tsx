@@ -1,6 +1,7 @@
 import type { PowerRanking, PowerRankingsSnapshot } from "@/lib/powerRankings/types"
 import { getMember } from "@/lib/config/members"
 import { Flag } from "./Flag"
+import { LocalDateTime } from "./LocalDateTime"
 
 function rankStyle(rank: number): { color: string; label: string; accentHex: string } {
   if (rank === 1) return { color: "neon-text-yellow", label: "1ST", accentHex: "#fee440" }
@@ -103,17 +104,21 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
 }
 
 function UpdatedAtLine({ when }: { when: string }) {
-  const formatted = new Date(when).toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
   return (
     <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/45 font-display">
       <span className="inline-block size-1.5 rounded-full bg-neon-cyan shadow-neon-cyan" />
-      Updated {formatted} · refreshes daily at 9am ET
+      Updated{" "}
+      <LocalDateTime
+        utcIso={when}
+        options={{
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        }}
+      />{" "}
+      · refreshes daily at 9am ET
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import type { Match, Score, TeamCode } from "@/lib/scoring/types"
+import { localDateKey } from "@/lib/time/local"
 
 export type FixtureOutcome = "scheduled" | "live" | "win" | "loss" | "draw"
 
@@ -14,9 +15,13 @@ export interface FixtureCellData {
   liveMinute?: number
 }
 
-/** Pull "YYYY-MM-DD" out of an ISO UTC kickoff for date-bucket keys. */
-export function dateKey(utcKickoff: string): string {
-  return utcKickoff.slice(0, 10)
+/**
+ * Date-bucket key for an ISO UTC kickoff. With no `timeZone`, returns the UTC
+ * calendar date (used during SSR); with a timezone, returns the calendar date
+ * a viewer in that zone would see.
+ */
+export function dateKey(utcKickoff: string, timeZone?: string): string {
+  return localDateKey(utcKickoff, timeZone)
 }
 
 /** Inclusive list of YYYY-MM-DD strings from `start` to `end`. */
@@ -35,13 +40,14 @@ export function makeDateRange(start: Date, end: Date): string[] {
   return out
 }
 
-/** Nested map: team -> date -> match. */
+/** Nested map: team -> local-calendar-date -> match. */
 export function indexFixturesByTeamAndDate(
-  matches: Match[]
+  matches: Match[],
+  timeZone?: string
 ): Map<TeamCode, Map<string, Match>> {
   const root = new Map<TeamCode, Map<string, Match>>()
   for (const m of matches) {
-    const key = dateKey(m.utcKickoff)
+    const key = dateKey(m.utcKickoff, timeZone)
     for (const team of [m.home, m.away] as TeamCode[]) {
       let inner = root.get(team)
       if (!inner) {
@@ -130,9 +136,10 @@ export function formatShortDate(isoDate: string): string {
 }
 
 /** Kickoff time formatted in the viewer's local zone: "3:00 PM". */
-export function formatLocalKickoffTime(utcIso: string): string {
+export function formatLocalKickoffTime(utcIso: string, timeZone?: string): string {
   return new Date(utcIso).toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: timeZone ?? "UTC",
   })
 }

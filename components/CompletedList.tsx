@@ -4,6 +4,7 @@ import { useState } from "react"
 import type { PointEvent, Reason, Stage } from "@/lib/scoring/types"
 import { Flag } from "./Flag"
 import { LiveDot } from "./LiveDot"
+import { LocalDateTime } from "./LocalDateTime"
 
 const STAGE_LABEL: Record<Stage, string> = {
   GROUP: "Group",
@@ -43,12 +44,6 @@ function PointsBadge({ event }: { event: PointEvent }) {
 }
 
 function PointLogRow({ event }: { event: PointEvent }) {
-  const when = new Date(event.utcKickoff).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
   return (
     <div className="flex items-center gap-3 rounded-lg bg-bg-row/60 px-3 py-2 ring-1 ring-white/5">
       <Flag team={event.team} size={22} />
@@ -64,7 +59,16 @@ function PointLogRow({ event }: { event: PointEvent }) {
           {event.isLive && <LiveDot title="Live — provisional" />}
         </div>
         <div className="mt-0.5 text-xs uppercase tracking-widest text-white/40">
-          {when} · {event.goalsFor} GF
+          <LocalDateTime
+            utcIso={event.utcKickoff}
+            options={{
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            }}
+          />{" "}
+          · {event.goalsFor} GF
         </div>
       </div>
       <div className="ml-auto">

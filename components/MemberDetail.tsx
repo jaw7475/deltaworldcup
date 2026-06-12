@@ -13,6 +13,7 @@ import {
 } from "@/lib/config/playersToWatch"
 import { Flag } from "./Flag"
 import { LiveDot } from "./LiveDot"
+import { LocalDateTime } from "./LocalDateTime"
 import { PositionHistoryChart } from "./PositionHistoryChart"
 import { CompletedList } from "./CompletedList"
 
@@ -63,13 +64,6 @@ function PlayerRow({ player }: { player: PlayerToWatch }) {
 }
 
 function NextMatchLine({ fix }: { fix: UpcomingFixture }) {
-  const when = new Date(fix.utcKickoff).toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
   return (
     <div className="flex items-center gap-3">
       <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-display shrink-0">
@@ -84,7 +78,18 @@ function NextMatchLine({ fix }: { fix: UpcomingFixture }) {
         <div className="text-[10px] uppercase tracking-widest text-neon-cyan">
           {STAGE_LABEL[fix.stage]}
         </div>
-        <div className="text-xs text-white/60">{when}</div>
+        <div className="text-xs text-white/60">
+          <LocalDateTime
+            utcIso={fix.utcKickoff}
+            options={{
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            }}
+          />
+        </div>
       </div>
     </div>
   )

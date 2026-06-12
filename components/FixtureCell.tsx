@@ -4,6 +4,7 @@ import { Flag } from "./Flag"
 
 interface FixtureCellProps {
   data: FixtureCellData | null
+  timeZone?: string
 }
 
 interface PaletteEntry {
@@ -46,7 +47,7 @@ const PALETTE: Record<FixtureOutcome, PaletteEntry> = {
   },
 }
 
-export function FixtureCell({ data }: FixtureCellProps) {
+export function FixtureCell({ data, timeZone }: FixtureCellProps) {
   if (!data) {
     return <div className="h-full w-full" />
   }
@@ -70,17 +71,17 @@ export function FixtureCell({ data }: FixtureCellProps) {
           className="relative z-10 flex flex-col items-center justify-center gap-0.5 w-full px-1 py-1 text-center"
           style={{ color: palette.text }}
         >
-          <CellBody data={data} />
+          <CellBody data={data} timeZone={timeZone} />
         </div>
       </div>
     </div>
   )
 }
 
-function CellBody({ data }: { data: FixtureCellData }) {
+function CellBody({ data, timeZone }: { data: FixtureCellData; timeZone?: string }) {
   const bottom =
     data.outcome === "scheduled"
-      ? formatLocalKickoffTime(data.match.utcKickoff)
+      ? formatLocalKickoffTime(data.match.utcKickoff, timeZone)
       : data.scoreLine
         ? `${data.scoreLine.for}–${data.scoreLine.against}`
         : ""

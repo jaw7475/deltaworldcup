@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { formatLocal, useUserTimeZone } from "@/lib/time/local"
 
 interface StaleBadgeProps {
   lastSuccessAt: string | null
@@ -13,6 +14,7 @@ export function StaleBadge({
   staleAfterMin = 120,
 }: StaleBadgeProps) {
   const [, force] = useState(0)
+  const tz = useUserTimeZone()
   useEffect(() => {
     const t = setInterval(() => force((x) => x + 1), 60_000)
     return () => clearInterval(t)
@@ -29,7 +31,7 @@ export function StaleBadge({
 
   return (
     <div
-      title={`Last successful sync ${new Date(lastSuccessAt).toLocaleString()}`}
+      title={`Last successful sync ${formatLocal(lastSuccessAt, {}, tz)}`}
       className="inline-flex items-center gap-2 rounded-full bg-neon-yellow/10 px-3 py-1 ring-1 ring-neon-yellow/40 text-neon-yellow font-display tracking-widest uppercase text-[10px]"
     >
       <span className="inline-block size-1.5 rounded-full bg-neon-yellow" />

@@ -8,12 +8,15 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
+import { formatLocal, useUserTimeZone } from "@/lib/time/local"
 
 interface PositionHistoryChartProps {
   history: { computedAt: string; rank: number }[]
 }
 
 export function PositionHistoryChart({ history }: PositionHistoryChartProps) {
+  const tz = useUserTimeZone()
+
   if (history.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-white/10 bg-bg-raised/50 p-6 text-center text-white/50 text-sm font-display tracking-wider uppercase">
@@ -25,12 +28,11 @@ export function PositionHistoryChart({ history }: PositionHistoryChartProps) {
   const data = history.map((p) => ({
     t: new Date(p.computedAt).getTime(),
     rank: p.rank,
-    label: new Date(p.computedAt).toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }),
+    label: formatLocal(
+      p.computedAt,
+      { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" },
+      tz
+    ),
   }))
 
   const maxRank = Math.max(...data.map((d) => d.rank))
