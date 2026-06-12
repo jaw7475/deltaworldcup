@@ -23,9 +23,10 @@ interface FixturesGridProps {
   rangeEnd?: string
 }
 
-// Tournament range padded by a day on each side so matches near the edges
-// can't fall off the grid when a viewer's local date differs from UTC.
-const DEFAULT_START = "2026-06-10"
+// Tournament range padded by a day on the end so matches near the edge
+// can't fall off the grid when a viewer's local date differs from UTC. The
+// start needs no padding because no matches play in any US time zone on 6/10.
+const DEFAULT_START = "2026-06-11"
 const DEFAULT_END = "2026-07-20"
 
 const MEMBER_COL_PX = 156
