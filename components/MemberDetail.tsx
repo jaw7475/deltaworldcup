@@ -152,8 +152,24 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
           {detail.displayName}
           {detail.hasLiveMatch && <LiveDot />}
         </h2>
-        <div className="mt-2 text-white/60 text-sm">
-          {detail.totalPoints} pts · {detail.totalGoalsFor} GF
+        <div className="mt-4 flex items-center gap-5 sm:gap-7">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-4xl sm:text-5xl tabular-nums neon-text-cyan leading-none">
+              {detail.totalPoints}
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-display">
+              pts
+            </span>
+          </div>
+          <span className="h-9 w-px bg-white/15" aria-hidden />
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-4xl sm:text-5xl tabular-nums text-white leading-none">
+              {detail.totalGoalsFor}
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-display">
+              GF
+            </span>
+          </div>
         </div>
       </header>
 
