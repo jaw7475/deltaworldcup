@@ -11,6 +11,10 @@ import {
   type PlayerTier,
   type PlayerToWatch,
 } from "@/lib/config/playersToWatch"
+import {
+  getPowerRanking,
+  POWER_RANKINGS_UPDATED_AT,
+} from "@/lib/config/powerRankings"
 import { Flag } from "./Flag"
 import { LiveDot } from "./LiveDot"
 import { PositionHistoryChart } from "./PositionHistoryChart"
@@ -237,8 +241,59 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
           Position history
         </h3>
-        <PositionHistoryChart history={detail.positionHistory} />
+        <PositionHistoryChart
+          history={
+            detail.positionHistory.length > 0
+              ? detail.positionHistory
+              : strawmanPositionHistory(detail.memberId)
+          }
+        />
       </section>
     </div>
   )
+}
+
+// Strawman position history — used while the tournament hasn't generated
+// any real `standings:history` snapshots yet. Produces a deterministic 8-day
+// series ending at the member's current power-ranking position, with small
+// realistic jitter. Replace with real KV-backed history once games are
+// underway.
+function strawmanPositionHistory(memberId: string) {
+  const endRank = getPowerRanking(memberId)?.rank ?? 6
+  const rng = mulberry32(hashString(memberId))
+  const days = 8
+  const ranks: number[] = [endRank]
+  for (let i = 1; i < days; i++) {
+    const last = ranks[ranks.length - 1]
+    const jitter = Math.round((rng() - 0.5) * 4) // ±2 per step
+    const next = Math.max(1, Math.min(12, last + jitter))
+    ranks.push(next)
+  }
+  ranks.reverse() // oldest → newest
+  const endMs = new Date(POWER_RANKINGS_UPDATED_AT).getTime()
+  const dayMs = 24 * 60 * 60 * 1000
+  return ranks.map((rank, i) => ({
+    computedAt: new Date(endMs - (days - 1 - i) * dayMs).toISOString(),
+    rank,
+  }))
+}
+
+function hashString(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
+}
+
+function mulberry32(seed: number): () => number {
+  let s = seed
+  return () => {
+    s = (s + 0x6d2b79f5) | 0
+    let t = s
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
 }
