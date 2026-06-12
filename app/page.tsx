@@ -29,12 +29,12 @@ export default async function Home() {
   const next = nextKickoff(now, SCHEDULE)
 
   return (
-    <main className="relative z-10 mx-auto max-w-5xl px-6 py-12">
-      <header className="mb-8">
-        <div className="text-xs uppercase tracking-[0.4em] text-white/40 font-display">
+    <main className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+      <header className="mb-6 sm:mb-8">
+        <div className="text-[10px] sm:text-xs uppercase tracking-[0.3em] sm:tracking-[0.4em] text-white/40 font-display">
           2026 Delta Fantasy Football League
         </div>
-        <h1 className="mt-3 font-display text-5xl md:text-6xl neon-text-cyan tracking-widest uppercase">
+        <h1 className="mt-3 font-display text-3xl sm:text-5xl md:text-6xl neon-text-cyan tracking-wider sm:tracking-widest uppercase">
           Delta World Cup
         </h1>
         <div className="mt-5 flex flex-wrap items-center gap-3">

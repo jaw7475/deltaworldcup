@@ -28,9 +28,9 @@ interface FixturesGridProps {
 const DEFAULT_START = "2026-06-10"
 const DEFAULT_END = "2026-07-20"
 
-const MEMBER_COL_PX = 220
-const FLAG_COL_PX = 56
-const DATE_COL_PX = 76
+const MEMBER_COL_PX = 180
+const FLAG_COL_PX = 48
+const DATE_COL_PX = 72
 const TEAM_ROW_PX = 60
 
 export function FixturesGrid({

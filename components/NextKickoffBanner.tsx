@@ -33,7 +33,7 @@ export function NextKickoffBanner({
 
   if (inWindow) {
     return (
-      <div className="inline-flex items-center gap-2 rounded-full bg-neon-magenta/10 px-4 py-1.5 ring-1 ring-neon-magenta/40 text-neon-magenta font-display tracking-widest uppercase text-xs">
+      <div className="inline-flex items-center gap-2 rounded-full bg-neon-magenta/10 px-3 sm:px-4 py-1.5 ring-1 ring-neon-magenta/40 text-neon-magenta font-display tracking-wider sm:tracking-widest uppercase text-[10px] sm:text-xs">
         <span className="inline-block size-2 rounded-full bg-neon-magenta animate-live-pulse" />
         Match in progress
       </div>
@@ -42,7 +42,7 @@ export function NextKickoffBanner({
 
   if (!nextKickoff) {
     return (
-      <div className="inline-block rounded-full bg-white/5 px-4 py-1.5 ring-1 ring-white/10 text-white/60 font-display tracking-widest uppercase text-xs">
+      <div className="inline-block rounded-full bg-white/5 px-3 sm:px-4 py-1.5 ring-1 ring-white/10 text-white/60 font-display tracking-wider sm:tracking-widest uppercase text-[10px] sm:text-xs">
         Tournament complete
       </div>
     )
@@ -50,7 +50,7 @@ export function NextKickoffBanner({
 
   const diff = new Date(nextKickoff).getTime() - Date.now()
   return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-neon-cyan/10 px-4 py-1.5 ring-1 ring-neon-cyan/40 text-neon-cyan font-display tracking-widest uppercase text-xs">
+    <div className="inline-flex items-center gap-2 rounded-full bg-neon-cyan/10 px-3 sm:px-4 py-1.5 ring-1 ring-neon-cyan/40 text-neon-cyan font-display tracking-wider sm:tracking-widest uppercase text-[10px] sm:text-xs">
       Next kickoff in {format(diff)}
     </div>
   )

@@ -107,7 +107,7 @@ export function DraftBoard({ initialData }: DraftBoardProps) {
       <div
         role="tablist"
         aria-label="Select a member to view their picks"
-        className="flex flex-wrap gap-1.5 bg-bg-raised/40 border-y border-white/15 px-2 py-2"
+        className="flex flex-nowrap overflow-x-auto sm:flex-wrap gap-1.5 bg-bg-raised/40 border-y border-white/15 px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {MEMBERS.map((m) => {
           const isActive = m.id === selectedId
@@ -130,7 +130,7 @@ export function DraftBoard({ initialData }: DraftBoardProps) {
                   : undefined
               }
               className={[
-                "font-display tracking-[0.18em] uppercase text-[10px] sm:text-[11px]",
+                "shrink-0 font-display tracking-[0.18em] uppercase text-[10px] sm:text-[11px]",
                 "px-2.5 sm:px-3 py-1.5 rounded-lg border transition",
                 isActive
                   ? "border-white/0"

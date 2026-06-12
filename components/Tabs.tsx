@@ -23,7 +23,7 @@ export function Tabs({ tabs, defaultActive, panels }: TabsProps) {
       <div
         role="tablist"
         aria-label="Sections"
-        className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-bg-raised/40 border-y border-white/15 px-2 py-2"
+        className="flex flex-nowrap overflow-x-auto sm:flex-wrap sm:justify-center gap-1.5 sm:gap-2 mb-6 sm:mb-8 bg-bg-raised/40 border-y border-white/15 px-2 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {tabs.map((t) => {
           const isActive = t.id === active
@@ -37,7 +37,7 @@ export function Tabs({ tabs, defaultActive, panels }: TabsProps) {
               id={`tab-${t.id}`}
               onClick={() => setActive(t.id)}
               className={[
-                "relative font-display tracking-[0.2em] uppercase text-[11px] sm:text-xs",
+                "relative shrink-0 font-display tracking-[0.2em] uppercase text-[11px] sm:text-xs",
                 "px-3 sm:px-4 py-2 rounded-xl transition",
                 isActive
                   ? "bg-neon-cyan/15 text-neon-cyan ring-1 ring-neon-cyan/50 shadow-neon-cyan"

@@ -49,7 +49,7 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
         boxShadow: `inset 0 0 0 1px ${ringInset}, 0 0 24px -10px ${ambientGlow}`,
       }}
     >
-      <div className="flex items-start gap-3 sm:gap-5">
+      <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-3 sm:gap-5">
         <div className={`font-display text-2xl tracking-widest w-14 sm:w-16 shrink-0 ${color}`}>
           {label}
         </div>
@@ -61,10 +61,10 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
             </div>
             <DeltaPill delta={ranking.delta} />
           </div>
-          <div className="mt-2 flex gap-3 flex-wrap">
+          <div className="mt-2 flex gap-2.5 sm:gap-3 flex-wrap">
             {member?.teams.map((t) => (
               <div key={t} className="flex flex-col items-center gap-1">
-                <Flag team={t} size={24} />
+                <Flag team={t} size={22} />
                 <span className="font-display text-[10px] tracking-[0.15em] text-white/55">
                   {t}
                 </span>
@@ -73,11 +73,11 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
           </div>
         </div>
 
-        <div className="flex flex-col items-end leading-none shrink-0 w-[5rem] sm:w-[5.5rem]">
+        <div className="basis-full sm:basis-auto flex sm:flex-col items-end justify-end leading-none shrink-0 sm:w-[5.5rem] gap-2 sm:gap-0">
           <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
             xPts
           </span>
-          <span className="mt-1 font-display text-3xl sm:text-4xl tabular-nums tracking-tight neon-text-cyan">
+          <span className="sm:mt-1 font-display text-3xl sm:text-4xl tabular-nums tracking-tight neon-text-cyan">
             {ranking.expectedPoints.toFixed(1)}
           </span>
         </div>

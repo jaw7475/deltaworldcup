@@ -40,7 +40,7 @@ export function PositionHistoryChart({ history }: PositionHistoryChartProps) {
   return (
     <div className="h-56 w-full">
       <ResponsiveContainer>
-        <LineChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 0 }}>
+        <LineChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: 4 }}>
           <XAxis dataKey="label" stroke="#ffffff66" fontSize={11} />
           <YAxis
             reversed
@@ -48,6 +48,7 @@ export function PositionHistoryChart({ history }: PositionHistoryChartProps) {
             allowDecimals={false}
             stroke="#ffffff66"
             fontSize={11}
+            width={28}
           />
           <Tooltip
             contentStyle={{

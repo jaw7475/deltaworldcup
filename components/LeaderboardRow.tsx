@@ -76,7 +76,7 @@ export function LeaderboardRow({ row }: LeaderboardRowProps) {
       aria-label={`${member?.displayName ?? row.memberId} detail`}
     >
       <div
-        className="flex items-center gap-3 sm:gap-5 rounded-xl bg-bg-row/80 px-4 sm:px-5 py-4 ring-1 ring-white/5 transition hover:bg-bg-row hover:ring-2 hover:-translate-y-px"
+        className="flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-3 sm:gap-5 rounded-xl bg-bg-row/80 px-4 sm:px-5 py-4 ring-1 ring-white/5 transition hover:bg-bg-row hover:ring-2 hover:-translate-y-px"
         style={{
           boxShadow: `inset 0 0 0 1px ${ringInset}, 0 0 24px -10px ${ambientGlow}`,
         }}
@@ -89,10 +89,10 @@ export function LeaderboardRow({ row }: LeaderboardRowProps) {
           <div className="font-display text-base sm:text-lg tracking-wide truncate">
             {member?.displayName ?? row.memberId}
           </div>
-          <div className="mt-2 flex gap-3">
+          <div className="mt-2 flex gap-2.5 sm:gap-3">
             {member?.teams.map((t) => (
               <div key={t} className="flex flex-col items-center gap-1">
-                <Flag team={t} size={24} />
+                <Flag team={t} size={22} />
                 <span className="font-display text-[10px] tracking-[0.15em] text-white/55">
                   {t}
                 </span>
@@ -101,7 +101,7 @@ export function LeaderboardRow({ row }: LeaderboardRowProps) {
           </div>
         </div>
 
-        <div className="flex items-end gap-4 sm:gap-6 shrink-0">
+        <div className="basis-full sm:basis-auto flex items-end justify-end gap-4 sm:gap-6 shrink-0">
           <Stat label="W-D-L" widthClass="w-[4.25rem]">
             <span className="tabular-nums">
               {record.w}<span className="text-white/30 mx-0.5">-</span>{record.d}<span className="text-white/30 mx-0.5">-</span>{record.l}

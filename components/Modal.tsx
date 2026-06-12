@@ -27,7 +27,7 @@ export function Modal({ children }: ModalProps) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4 sm:p-8"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-2 sm:p-8"
       onClick={(e) => {
         if (e.target === overlayRef.current) close()
       }}
@@ -42,7 +42,7 @@ export function Modal({ children }: ModalProps) {
             Close
           </button>
         </div>
-        <div className="px-4 pb-6 sm:px-8 sm:pb-8">{children}</div>
+        <div className="px-3 pb-5 sm:px-8 sm:pb-8">{children}</div>
       </div>
     </div>
   )
