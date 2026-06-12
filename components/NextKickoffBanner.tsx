@@ -34,8 +34,18 @@ export function NextKickoffBanner({
   const [inWindow, setInWindow] = useState(initialInWindow)
   const [, force] = useState(0)
 
+  // Tick the countdown display every 30s so "Next kickoff in Xh Ym" stays
+  // fresh between API fetches.
+  useEffect(() => {
+    const t = setInterval(() => force((x) => x + 1), 30_000)
+    return () => clearInterval(t)
+  }, [])
+
+  // Re-poll /api/standings on the same cadence as the leaderboard: 30s when
+  // a match is live, 5m otherwise (the cron itself only fires every 5m).
   useEffect(() => {
     let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
 
     async function fetchOnce() {
       try {
@@ -50,18 +60,22 @@ export function NextKickoffBanner({
       }
     }
 
-    // Correct any stale SSR data right away, then keep state and the
-    // countdown ticking together every 20s.
+    function scheduleNext() {
+      const delayMs = inWindow ? 30_000 : 5 * 60_000
+      timer = setTimeout(async () => {
+        await fetchOnce()
+        if (!cancelled) scheduleNext()
+      }, delayMs)
+    }
+
+    // Correct any stale SSR data right away, then settle into the cadence.
     fetchOnce()
-    const t = setInterval(() => {
-      force((x) => x + 1)
-      fetchOnce()
-    }, 20_000)
+    scheduleNext()
     return () => {
       cancelled = true
-      clearInterval(t)
+      if (timer) clearTimeout(timer)
     }
-  }, [])
+  }, [inWindow])
 
   if (inWindow) {
     return (
