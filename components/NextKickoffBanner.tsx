@@ -7,6 +7,11 @@ interface NextKickoffBannerProps {
   inWindow: boolean
 }
 
+interface StandingsLite {
+  inWindow: boolean
+  nextKickoff: string | null
+}
+
 function format(diffMs: number): string {
   if (diffMs <= 0) return "now"
   const totalMin = Math.floor(diffMs / 60_000)
@@ -22,13 +27,40 @@ function format(diffMs: number): string {
 }
 
 export function NextKickoffBanner({
-  nextKickoff,
-  inWindow,
+  nextKickoff: initialNextKickoff,
+  inWindow: initialInWindow,
 }: NextKickoffBannerProps) {
+  const [nextKickoff, setNextKickoff] = useState(initialNextKickoff)
+  const [inWindow, setInWindow] = useState(initialInWindow)
   const [, force] = useState(0)
+
   useEffect(() => {
-    const t = setInterval(() => force((x) => x + 1), 30_000)
-    return () => clearInterval(t)
+    let cancelled = false
+
+    async function fetchOnce() {
+      try {
+        const res = await fetch("/api/standings", { cache: "no-store" })
+        if (!res.ok) return
+        const json = (await res.json()) as StandingsLite
+        if (cancelled) return
+        setNextKickoff(json.nextKickoff)
+        setInWindow(json.inWindow)
+      } catch {
+        // Swallow — retry on the next tick.
+      }
+    }
+
+    // Correct any stale SSR data right away, then keep state and the
+    // countdown ticking together every 20s.
+    fetchOnce()
+    const t = setInterval(() => {
+      force((x) => x + 1)
+      fetchOnce()
+    }, 20_000)
+    return () => {
+      cancelled = true
+      clearInterval(t)
+    }
   }, [])
 
   if (inWindow) {
