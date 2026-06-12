@@ -10,7 +10,7 @@ import type {
 } from "@/lib/scoring/types"
 import {
   aggregateTopScorers,
-  type GoalsByMatch,
+  type TopScorers,
   type TopScorerRow,
 } from "./goals"
 
@@ -41,7 +41,7 @@ export function buildMemberDetail(
   memberId: string,
   matches: Match[],
   history: StandingsSnapshot[],
-  goalsByMatch: GoalsByMatch
+  scorers: TopScorers
 ): MemberDetail | null {
   const member = getMember(memberId)
   if (!member) return null
@@ -95,7 +95,7 @@ export function buildMemberDetail(
     }
   }
 
-  const topScorers = aggregateTopScorers(goalsByMatch, member.teams)
+  const topScorers = aggregateTopScorers(scorers, member.teams)
 
   return {
     memberId,

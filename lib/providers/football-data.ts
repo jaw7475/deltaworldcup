@@ -1,6 +1,11 @@
 import { z } from "zod"
 import type { Match, Stage, MatchStatus } from "@/lib/scoring/types"
-import type { FootballDataProvider, MatchDetail, GoalEvent } from "./types"
+import type {
+  FootballDataProvider,
+  MatchDetail,
+  GoalEvent,
+  ScorerEntry,
+} from "./types"
 
 const BASE = "https://api.football-data.org/v4"
 
@@ -67,6 +72,21 @@ const matchDetailResponseSchema = z.object({
   homeTeam: teamSchema,
   awayTeam: teamSchema,
   goals: z.array(goalSchema).optional(),
+})
+
+const scorerEntrySchema = z.object({
+  player: z.object({
+    name: z.string(),
+  }),
+  team: teamSchema,
+  goals: z.number(),
+  assists: z.number().nullable().optional(),
+  penalties: z.number().nullable().optional(),
+  playedMatches: z.number().optional(),
+})
+
+const scorersResponseSchema = z.object({
+  scorers: z.array(scorerEntrySchema),
 })
 
 // football-data.org sends ISO 3166-1 alpha-3 codes; we use FIFA codes. The two
@@ -214,5 +234,34 @@ export class FootballDataApiProvider implements FootballDataProvider {
       })
     }
     return { matchId: String(parsed.id), goals }
+  }
+
+  async fetchTopScorers(): Promise<ScorerEntry[]> {
+    const res = await fetch(
+      `${BASE}/competitions/${this.competition}/scorers?limit=100`,
+      {
+        headers: { "X-Auth-Token": this.token },
+        cache: "no-store",
+      }
+    )
+    if (!res.ok) {
+      throw new Error(
+        `football-data scorers: ${res.status} ${res.statusText} — competition=${this.competition}`
+      )
+    }
+    const json = await res.json()
+    const parsed = scorersResponseSchema.parse(json)
+    return parsed.scorers.map((s): ScorerEntry => {
+      const rawTla = s.team.tla ?? s.team.shortName ?? ""
+      const team = TLA_REMAP[rawTla] ?? rawTla
+      return {
+        name: s.player.name,
+        team,
+        goals: s.goals,
+        assists: s.assists ?? null,
+        penalties: s.penalties ?? null,
+        playedMatches: s.playedMatches ?? 0,
+      }
+    })
   }
 }

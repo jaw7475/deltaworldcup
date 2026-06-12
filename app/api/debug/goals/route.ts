@@ -1,85 +1,30 @@
 import { NextResponse } from "next/server"
-import { readGoalsByMatch } from "@/lib/standings/goals"
-import { readMatches } from "@/lib/standings/snapshot"
-import { getProvider } from "@/lib/providers"
-
-async function fetchRaw(matchId: string): Promise<unknown> {
-  const token = process.env.FOOTBALL_DATA_TOKEN
-  if (!token) return { error: "no FOOTBALL_DATA_TOKEN env" }
-  const res = await fetch(`https://api.football-data.org/v4/matches/${matchId}`, {
-    headers: { "X-Auth-Token": token },
-    cache: "no-store",
-  })
-  if (!res.ok) return { status: res.status, statusText: res.statusText }
-  return res.json()
-}
-
-async function fetchScorers(): Promise<unknown> {
-  const token = process.env.FOOTBALL_DATA_TOKEN
-  if (!token) return { error: "no FOOTBALL_DATA_TOKEN env" }
-  const res = await fetch(
-    "https://api.football-data.org/v4/competitions/WC/scorers?limit=100",
-    {
-      headers: { "X-Auth-Token": token },
-      cache: "no-store",
-    }
-  )
-  if (!res.ok) return { status: res.status, statusText: res.statusText }
-  return res.json()
-}
+import { readTopScorers, refreshTopScorers } from "@/lib/standings/goals"
 
 export const dynamic = "force-dynamic"
 
-// Temporary diagnostic — surfaces the goal store + a raw provider fetch for the
-// first FINISHED match so we can see exactly what football-data is returning.
-// Remove once top scorers are verified working.
+// Temporary diagnostic — surfaces the cached scorer list plus a forced refresh.
+// Remove once top scorers are verified working in prod.
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  const probe = url.searchParams.get("probe") === "1"
+  const refresh = url.searchParams.get("refresh") === "1"
 
-  const [goalsByMatch, matches] = await Promise.all([
-    readGoalsByMatch(),
-    readMatches(),
-  ])
-  const matchCount = matches?.length ?? 0
-  const finished = (matches ?? []).filter((m) => m.status === "FINISHED")
-  const storedMatchIds = Object.keys(goalsByMatch)
-  const sampleStored = storedMatchIds.slice(0, 3).map((id) => ({
-    matchId: id,
-    goalsCount: goalsByMatch[id].length,
-    goals: goalsByMatch[id].slice(0, 5),
-  }))
-
-  let probeResult: unknown = null
-  if (probe && finished.length > 0) {
-    const match = finished[0]
+  let refreshResult: { count: number } | { error: string } | null = null
+  if (refresh) {
     try {
-      const [detail, raw, scorers] = await Promise.all([
-        getProvider().fetchMatchDetail(match.id),
-        fetchRaw(match.id),
-        fetchScorers(),
-      ])
-      probeResult = {
-        matchId: match.id,
-        teams: `${match.home} vs ${match.away}`,
-        detail,
-        raw,
-        scorers,
-      }
+      const scorers = await refreshTopScorers()
+      refreshResult = { count: scorers.length }
     } catch (err) {
-      probeResult = {
-        matchId: match.id,
+      refreshResult = {
         error: err instanceof Error ? err.message : String(err),
       }
     }
   }
 
+  const cached = await readTopScorers()
   return NextResponse.json({
-    matchCount,
-    finishedCount: finished.length,
-    finishedIds: finished.map((m) => m.id),
-    storedCount: storedMatchIds.length,
-    sampleStored,
-    probeResult,
+    cachedCount: cached.length,
+    cachedSample: cached.slice(0, 10),
+    refreshResult,
   })
 }

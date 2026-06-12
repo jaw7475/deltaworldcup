@@ -1,5 +1,10 @@
 import type { Match, MatchStatus, Score, TeamCode } from "@/lib/scoring/types"
-import type { FootballDataProvider, GoalEvent, MatchDetail } from "./types"
+import type {
+  FootballDataProvider,
+  GoalEvent,
+  MatchDetail,
+  ScorerEntry,
+} from "./types"
 import { SCHEDULE } from "@/lib/config/schedule"
 import { TEAMS } from "@/lib/config/teams"
 import { PLAYERS_TO_WATCH } from "@/lib/config/playersToWatch"
@@ -31,6 +36,43 @@ export class MockProvider implements FootballDataProvider {
     if (!match || match.status !== "FINISHED") return { matchId, goals: [] }
     const ft = match.fullTime ?? match.currentScore
     return { matchId, goals: deterministicGoals(match, ft.home, ft.away) }
+  }
+
+  async fetchTopScorers(): Promise<ScorerEntry[]> {
+    // Derive from the deterministic-goals function so dev mode shows real
+    // names that line up with what fullDemo/liveDemo finish.
+    const matches = await this.fetchAllMatches()
+    const tally = new Map<string, ScorerEntry>()
+    const apps = new Map<string, Set<string>>()
+    for (const m of matches) {
+      if (m.status !== "FINISHED") continue
+      const ft = m.fullTime ?? m.currentScore
+      for (const g of deterministicGoals(m, ft.home, ft.away)) {
+        const key = `${g.team}::${g.scorer}`
+        const existing = tally.get(key)
+        if (existing) {
+          existing.goals += 1
+        } else {
+          tally.set(key, {
+            name: g.scorer,
+            team: g.team,
+            goals: 1,
+            assists: null,
+            penalties: null,
+            playedMatches: 0,
+          })
+        }
+        if (!apps.has(key)) apps.set(key, new Set())
+        apps.get(key)!.add(m.id)
+      }
+    }
+    for (const [key, entry] of tally) {
+      entry.playedMatches = apps.get(key)?.size ?? 0
+    }
+    return Array.from(tally.values()).sort((a, b) => {
+      if (b.goals !== a.goals) return b.goals - a.goals
+      return a.name.localeCompare(b.name)
+    })
   }
 }
 

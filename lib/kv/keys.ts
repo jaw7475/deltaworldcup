@@ -7,7 +7,7 @@ export const KV_KEYS = {
   syncLastError: "sync:lastError",
   powerRankingsCurrent: "powerRankings:current",
   powerRankingsPrevious: "powerRankings:previous",
-  goalsByMatch: "goals:byMatch",
+  topScorers: "scorers:list",
 } as const
 
 export const HISTORY_CAP = 500

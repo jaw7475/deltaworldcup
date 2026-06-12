@@ -12,7 +12,7 @@ import {
   recordSyncSuccess,
   recordSyncError,
 } from "@/lib/standings/snapshot"
-import { ensureBoxScores } from "@/lib/standings/goals"
+import { refreshTopScorers } from "@/lib/standings/goals"
 
 const HOURLY_OUTSIDE_WINDOW_MS = 60 * 60 * 1000
 
@@ -69,15 +69,15 @@ export async function GET(request: Request) {
     await writeCurrentStandings(snap)
     const appended = await maybeAppendHistory(snap)
 
-    // Box-score (goalscorer) backfill — isolated from the main sync so a
-    // detail-endpoint hiccup never blocks standings.
-    let goalsTracked: number | null = null
+    // Tournament top-scorers refresh — isolated from the main sync so a
+    // scorers-endpoint hiccup never blocks standings.
+    let scorersTracked: number | null = null
     try {
-      const goals = await ensureBoxScores(matches)
-      goalsTracked = Object.keys(goals).length
+      const scorers = await refreshTopScorers()
+      scorersTracked = scorers.length
     } catch (err) {
       console.warn(
-        "[cron] box-score backfill failed (continuing):",
+        "[cron] top-scorers refresh failed (continuing):",
         err instanceof Error ? err.message : err
       )
     }
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
       matchesCount: matches.length,
       historyAppended: appended,
       anyLive: snap.rows.some((r) => r.hasLiveMatch),
-      goalsTracked,
+      scorersTracked,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
