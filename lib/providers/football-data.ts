@@ -44,6 +44,13 @@ const responseSchema = z.object({
   matches: z.array(matchSchema),
 })
 
+// football-data.org sends ISO 3166-1 alpha-3 codes; we use FIFA codes. The two
+// agree for 47/48 of the 2026 qualifiers — Uruguay (FIFA: URU, ISO: URY) is the
+// outlier. Add more entries here if future qualifiers diverge.
+const TLA_REMAP: Record<string, string> = {
+  URY: "URU",
+}
+
 const STAGE_MAP: Record<string, Stage> = {
   GROUP_STAGE: "GROUP",
   LAST_16: "R16",
@@ -94,8 +101,10 @@ export class FootballDataApiProvider implements FootballDataProvider {
     return parsed.matches.map((m): Match => {
       const status = mapStatus(m.status)
       const stage = STAGE_MAP[m.stage] ?? "GROUP"
-      const home = m.homeTeam.tla ?? m.homeTeam.shortName ?? `T${m.homeTeam.id}`
-      const away = m.awayTeam.tla ?? m.awayTeam.shortName ?? `T${m.awayTeam.id}`
+      const rawHome = m.homeTeam.tla ?? m.homeTeam.shortName ?? `T${m.homeTeam.id}`
+      const rawAway = m.awayTeam.tla ?? m.awayTeam.shortName ?? `T${m.awayTeam.id}`
+      const home = TLA_REMAP[rawHome] ?? rawHome
+      const away = TLA_REMAP[rawAway] ?? rawAway
       const ft = m.score.fullTime
       const pens = m.score.penalties
       const et = m.score.extraTime
