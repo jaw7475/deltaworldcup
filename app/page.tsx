@@ -1,6 +1,7 @@
-import { readCurrentStandings, readSyncStatus } from "@/lib/standings/snapshot"
+import { readCurrentStandings, readMatches, readSyncStatus } from "@/lib/standings/snapshot"
 import { isInWindow, nextKickoff } from "@/lib/windows/windows"
 import { SCHEDULE } from "@/lib/config/schedule"
+import { MEMBERS } from "@/lib/config/members"
 import { Leaderboard } from "@/components/Leaderboard"
 import { NextKickoffBanner } from "@/components/NextKickoffBanner"
 import { StaleBadge } from "@/components/StaleBadge"
@@ -8,14 +9,16 @@ import { RulesCard } from "@/components/RulesCard"
 import { Tabs } from "@/components/Tabs"
 import { ComingSoon } from "@/components/ComingSoon"
 import { LiveLegend } from "@/components/LiveLegend"
+import { FixturesGrid } from "@/components/FixturesGrid"
 
 export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const now = new Date()
-  const [snapshot, sync] = await Promise.all([
+  const [snapshot, sync, matches] = await Promise.all([
     readCurrentStandings(),
     readSyncStatus(),
+    readMatches(),
   ])
   const inWindow = isInWindow(now, SCHEDULE)
   const next = nextKickoff(now, SCHEDULE)
@@ -43,7 +46,7 @@ export default async function Home() {
         tabs={[
           { id: "rules", label: "Rules" },
           { id: "table", label: "Table" },
-          { id: "fixtures", label: "Fixtures", comingSoon: true },
+          { id: "fixtures", label: "Fixtures" },
           { id: "players", label: "Players", comingSoon: true },
           { id: "power", label: "Power Rankings", comingSoon: true },
         ]}
@@ -59,10 +62,7 @@ export default async function Home() {
             </>
           ),
           fixtures: (
-            <ComingSoon
-              title="Fixtures"
-              description="Upcoming and recent matches across all 12 rosters. Wiring up next."
-            />
+            <FixturesGrid members={MEMBERS} matches={matches ?? []} />
           ),
           players: (
             <ComingSoon
