@@ -82,7 +82,6 @@ export function DraftBoard({ initialData }: DraftBoardProps) {
       .map((c) => `${c.round}:${c.slot}`)
   )
 
-  const ownedCount = ownedSet.size
   const tradedAwayCount = tradedAwaySet.size
 
   return (
@@ -155,10 +154,6 @@ export function DraftBoard({ initialData }: DraftBoardProps) {
           <div className="font-display text-sm tracking-widest uppercase text-white">
             <span style={{ color: selectedMember.accentColor }}>
               {selectedMember.displayName}
-            </span>
-            <span className="text-white/40"> · </span>
-            <span className="text-white/70">
-              owns {ownedCount} {ownedCount === 1 ? "pick" : "picks"}
             </span>
             {tradedAwayCount > 0 && (
               <>
