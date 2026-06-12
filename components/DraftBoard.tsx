@@ -90,7 +90,7 @@ export function DraftBoard({ initialData }: DraftBoardProps) {
       {/* Status / banner row */}
       <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] font-display uppercase tracking-[0.25em] text-white/55">
         <div className="flex items-center gap-3">
-          <span>2026 Rookie Draft · 16 rounds · snake</span>
+          <span>2026 Draft · 16 rounds · snake</span>
           {data.hasLiveMatch && (
             <span className="inline-flex items-center gap-1.5 text-neon-live">
               <span className="inline-block size-1.5 rounded-full bg-neon-live animate-live-pulse shadow-neon-live" />

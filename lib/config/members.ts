@@ -67,42 +67,42 @@ export const MEMBERS: readonly Member[] = [
     id: "zach-d",
     displayName: "Zach D",
     teams: ["FRA", "SUI", "NOR", "CUW"],
-    accentColor: "#00f5d4",
+    accentColor: "#ff8c42",
     sleeperUserId: "867536913341562880",
   },
   {
     id: "josh-w",
     displayName: "Josh W",
     teams: ["CRO", "URU", "CZE", "BIH"],
-    accentColor: "#fee440",
+    accentColor: "#06d6a0",
     sleeperUserId: "735665981585752064",
   },
   {
     id: "danny",
     displayName: "Danny",
     teams: ["ARG", "MEX", "PAN", "NZL"],
-    accentColor: "#ff006e",
+    accentColor: "#ff4c4c",
     sleeperUserId: "737386559564894208",
   },
   {
     id: "zach-f",
     displayName: "Zach F",
     teams: ["MAR", "ECU", "SCO", "JOR"],
-    accentColor: "#b16cff",
+    accentColor: "#ffd166",
     sleeperUserId: "474319556098125824",
   },
   {
     id: "dan",
     displayName: "Dan",
     teams: ["POR", "KOR", "TUN", "GHA"],
-    accentColor: "#9bff66",
+    accentColor: "#4361ee",
     sleeperUserId: "735237390876176384",
   },
   {
     id: "andrew-s",
     displayName: "Andrew S",
     teams: ["BEL", "AUS", "CIV", "HAI"],
-    accentColor: "#7dd3fc",
+    accentColor: "#f72585",
     sleeperUserId: "735244096511320064",
   },
 ] as const
@@ -161,6 +161,21 @@ export function getMemberBySleeperUserId(
     }
     if (n > 1) {
       throw new Error(`Team ${t.code} is assigned to ${n} members`)
+    }
+  }
+  const colorCount = new Map<string, string[]>()
+  for (const m of MEMBERS) {
+    if (!m.accentColor) continue
+    const key = m.accentColor.toLowerCase()
+    const arr = colorCount.get(key) ?? []
+    arr.push(m.id)
+    colorCount.set(key, arr)
+  }
+  for (const [color, ids] of colorCount) {
+    if (ids.length > 1) {
+      throw new Error(
+        `Accent color ${color} is shared by ${ids.length} members: ${ids.join(", ")}`
+      )
     }
   }
 })()
