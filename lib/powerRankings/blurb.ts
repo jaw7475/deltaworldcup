@@ -140,7 +140,7 @@ export function buildBlurbInputs(args: {
       delta,
       expectedPoints: x.expectedPoints,
       bankedPoints: x.bankedPoints,
-      remainingXPts: x.remainingXPts,
+      remainingXPts: x.remainingGroupXPts + x.koXPts,
       resultsSinceLast: results?.formatted ?? "",
     })
   }

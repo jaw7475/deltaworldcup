@@ -1,0 +1,139 @@
+import type { TeamCode } from "@/lib/scoring/types"
+import { getElo, eloWinProb } from "@/lib/config/elo"
+
+/**
+ * Knockout-round projection. Given P(reach R32) per team, we cascade through
+ * each round computing P(reach next round) by estimating the average Elo of
+ * teams remaining at that round (weighted by P(reach round)) and applying the
+ * Elo win formula.
+ *
+ * This is an analytical approximation — it doesn't model the actual bracket
+ * pairing, which means a team that draws an easy opponent in round R will look
+ * underrated by this model and vice-versa. Across thousands of brackets the
+ * average opponent quality does converge to the weighted average though, so
+ * for aggregate xPts the approximation is reasonable.
+ */
+
+export const KO_ROUNDS = ["R32", "R16", "QF", "SF", "FINAL"] as const
+export type KoRound = (typeof KO_ROUNDS)[number]
+
+export interface KoTeamProjection {
+  /** P(team plays in round R) for R in KO_ROUNDS. */
+  pReach: Record<KoRound, number>
+  /** P(team plays in the third-place playoff). */
+  pThirdPlace: number
+  /** P(team wins each round | they reached it). */
+  pWinGiven: Record<KoRound, number>
+  /** P(team wins third-place | they're in it). */
+  pWinThirdGiven: number
+}
+
+export interface KoProjectionInput {
+  /** P(team advances to R32) — from the group-stage simulator. */
+  pReachR32: Map<TeamCode, number>
+}
+
+function weightedAverageElo(
+  weights: Map<TeamCode, number>
+): number {
+  let wSum = 0
+  let eloSum = 0
+  for (const [team, w] of weights) {
+    if (w <= 0) continue
+    wSum += w
+    eloSum += w * getElo(team)
+  }
+  return wSum > 0 ? eloSum / wSum : 1500
+}
+
+export function projectKnockouts(
+  input: KoProjectionInput
+): Map<TeamCode, KoTeamProjection> {
+  const out = new Map<TeamCode, KoTeamProjection>()
+  // Init: P(reach R32) given
+  const reachByRound: Record<KoRound, Map<TeamCode, number>> = {
+    R32: new Map(input.pReachR32),
+    R16: new Map(),
+    QF: new Map(),
+    SF: new Map(),
+    FINAL: new Map(),
+  }
+  const pWinByRound: Record<KoRound, Map<TeamCode, number>> = {
+    R32: new Map(),
+    R16: new Map(),
+    QF: new Map(),
+    SF: new Map(),
+    FINAL: new Map(),
+  }
+
+  const orderedRounds: KoRound[] = ["R32", "R16", "QF", "SF", "FINAL"]
+  for (let i = 0; i < orderedRounds.length; i++) {
+    const round = orderedRounds[i]
+    const teamsThisRound = reachByRound[round]
+    const avgElo = weightedAverageElo(teamsThisRound)
+    for (const [team, pReach] of teamsThisRound) {
+      const pWin = eloWinProb(getElo(team), avgElo)
+      pWinByRound[round].set(team, pWin)
+      if (i + 1 < orderedRounds.length) {
+        const next = orderedRounds[i + 1]
+        reachByRound[next].set(team, pReach * pWin)
+      }
+    }
+  }
+
+  // P(third-place match) = P(reach SF) × P(lose SF)
+  const pThirdMap = new Map<TeamCode, number>()
+  for (const [team, pReachSF] of reachByRound.SF) {
+    const pWinSF = pWinByRound.SF.get(team) ?? 0
+    pThirdMap.set(team, pReachSF * (1 - pWinSF))
+  }
+  // Average opponent in 3rd-place match = same weighted average over teams in 3rd
+  const avgThirdElo = weightedAverageElo(pThirdMap)
+  const pWinThirdMap = new Map<TeamCode, number>()
+  for (const [team] of pThirdMap) {
+    pWinThirdMap.set(team, eloWinProb(getElo(team), avgThirdElo))
+  }
+
+  // Assemble per-team projection
+  const allTeams = new Set<TeamCode>(input.pReachR32.keys())
+  for (const team of allTeams) {
+    out.set(team, {
+      pReach: {
+        R32: reachByRound.R32.get(team) ?? 0,
+        R16: reachByRound.R16.get(team) ?? 0,
+        QF: reachByRound.QF.get(team) ?? 0,
+        SF: reachByRound.SF.get(team) ?? 0,
+        FINAL: reachByRound.FINAL.get(team) ?? 0,
+      },
+      pThirdPlace: pThirdMap.get(team) ?? 0,
+      pWinGiven: {
+        R32: pWinByRound.R32.get(team) ?? 0,
+        R16: pWinByRound.R16.get(team) ?? 0,
+        QF: pWinByRound.QF.get(team) ?? 0,
+        SF: pWinByRound.SF.get(team) ?? 0,
+        FINAL: pWinByRound.FINAL.get(team) ?? 0,
+      },
+      pWinThirdGiven: pWinThirdMap.get(team) ?? 0,
+    })
+  }
+  return out
+}
+
+/**
+ * xPts contribution from KO rounds for a team.
+ * Per round: 3 · P(win) + 0.15 · P(loss). The 0.15 reflects the empirical
+ * share of KO losses that go to ET or pens (which score 1pt under our rules).
+ * Sum over each round the team might play in, weighted by P(reach round).
+ */
+export function koExpectedPoints(p: KoTeamProjection): number {
+  let total = 0
+  for (const round of KO_ROUNDS) {
+    const pReach = p.pReach[round]
+    const pWin = p.pWinGiven[round]
+    const pLoss = 1 - pWin
+    total += pReach * (3 * pWin + 0.15 * pLoss)
+  }
+  // Third-place match
+  total += p.pThirdPlace * (3 * p.pWinThirdGiven + 0.15 * (1 - p.pWinThirdGiven))
+  return total
+}

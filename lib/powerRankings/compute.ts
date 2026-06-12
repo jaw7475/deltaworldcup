@@ -1,6 +1,10 @@
 import { readMatches, readCurrentStandings } from "@/lib/standings/snapshot"
-import { getOddsProvider } from "@/lib/providers/odds"
-import { computeMemberXPts, rankByXPts } from "./expectedPoints"
+import {
+  computeMemberXPts,
+  rankByXPts,
+  type BankedByMember,
+  type BankedByTeam,
+} from "./expectedPoints"
 import { buildResultsSinceLast } from "./resultsSinceLast"
 import {
   getBlurbWriter,
@@ -14,26 +18,34 @@ export interface ComputeResult {
   snapshot: PowerRankingsSnapshot
   diagnostics: {
     matchesCount: number
-    oddsCount: number
-    pricedMatches: number
     blurbsWritten: number
+    trials: number
   }
 }
 
 export async function computePowerRankings(now: Date): Promise<ComputeResult> {
   const matches = (await readMatches()) ?? []
   const standings = await readCurrentStandings()
-  const bankedByMember: Record<string, number> = {}
+
+  const bankedByMember: BankedByMember = {}
+  const bankedByTeam: BankedByTeam = {}
   if (standings) {
     for (const row of standings.rows) {
       bankedByMember[row.memberId] = row.points
+      for (const tr of row.teamRecords) {
+        const teamPts = tr.events.reduce((s, e) => s + e.points, 0)
+        bankedByTeam[tr.team] = teamPts
+      }
     }
   }
 
-  const oddsProvider = getOddsProvider()
-  const probs = await oddsProvider.fetchMatchProbabilities()
-
-  const memberXPts = computeMemberXPts({ matches, probs, bankedByMember })
+  const trials = 10_000
+  const memberXPts = computeMemberXPts({
+    matches,
+    bankedByMember,
+    bankedByTeam,
+    trials,
+  })
   const ranked = rankByXPts(memberXPts)
   const rankingsMap = new Map(ranked.map((r) => [r.memberId, r.rank]))
 
@@ -60,8 +72,6 @@ export async function computePowerRankings(now: Date): Promise<ComputeResult> {
   try {
     blurbs = await blurbWriter.writeBlurbs(blurbInputs)
   } catch (err) {
-    // Don't fail the whole refresh just because the LLM call broke — preserve
-    // last-known blurbs if we have them.
     console.error("[power-rankings] blurb writer failed:", err)
     blurbs = new Map(
       prevSnapshot?.rankings.map((r) => [r.memberId, r.blurb]) ?? []
@@ -85,17 +95,12 @@ export async function computePowerRankings(now: Date): Promise<ComputeResult> {
   }
   await writePowerRankings(snapshot)
 
-  const pricedMatches = memberXPts.reduce(
-    (sum, m) => sum + m.perTeam.reduce((s, t) => s + t.matchesPriced, 0),
-    0
-  )
   return {
     snapshot,
     diagnostics: {
       matchesCount: matches.length,
-      oddsCount: probs.length,
-      pricedMatches,
       blurbsWritten: blurbs.size,
+      trials,
     },
   }
 }

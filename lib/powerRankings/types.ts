@@ -1,5 +1,3 @@
-import type { TeamCode } from "@/lib/scoring/types"
-
 export interface PowerRanking {
   memberId: string
   /** 1 = top of the rankings. */
@@ -21,14 +19,4 @@ export interface PowerRankingsSnapshot {
   /** ISO timestamp the rankings were generated. */
   computedAt: string
   rankings: PowerRanking[]
-}
-
-/** Per-match implied probabilities derived from bookmaker odds. */
-export interface MatchProbabilities {
-  matchId: string
-  homeTeam: TeamCode
-  awayTeam: TeamCode
-  pHome: number
-  pDraw: number
-  pAway: number
 }
