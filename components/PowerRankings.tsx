@@ -1,5 +1,4 @@
-import { POWER_RANKINGS, POWER_RANKINGS_UPDATED_AT } from "@/lib/config/powerRankings"
-import type { PowerRanking } from "@/lib/config/powerRankings"
+import type { PowerRanking, PowerRankingsSnapshot } from "@/lib/powerRankings/types"
 import { getMember } from "@/lib/config/members"
 import { Flag } from "./Flag"
 
@@ -83,9 +82,11 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
         </div>
       </div>
 
-      <p className="mt-4 text-sm text-white/80 leading-relaxed">
-        {ranking.blurb}
-      </p>
+      {ranking.blurb && (
+        <p className="mt-4 text-sm text-white/80 leading-relaxed">
+          {ranking.blurb}
+        </p>
+      )}
 
       {ranking.resultsSinceLast && (
         <div className="mt-3 pt-3 border-t border-white/10">
@@ -101,9 +102,8 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
   )
 }
 
-function UpdatedAtLine() {
-  const d = new Date(POWER_RANKINGS_UPDATED_AT)
-  const when = d.toLocaleString(undefined, {
+function UpdatedAtLine({ when }: { when: string }) {
+  const formatted = new Date(when).toLocaleString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -113,13 +113,29 @@ function UpdatedAtLine() {
   return (
     <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-white/45 font-display">
       <span className="inline-block size-1.5 rounded-full bg-neon-cyan shadow-neon-cyan" />
-      Updated {when} · refreshes daily
+      Updated {formatted} · refreshes daily
     </div>
   )
 }
 
-export function PowerRankings() {
-  const sorted = [...POWER_RANKINGS].sort((a, b) => a.rank - b.rank)
+function EmptyState() {
+  return (
+    <section aria-label="Power Rankings">
+      <div className="mb-5">
+        <h2 className="font-display text-xl sm:text-2xl uppercase tracking-widest neon-text-magenta">
+          Power Rankings
+        </h2>
+      </div>
+      <div className="rounded-xl bg-bg-row/60 px-5 py-8 ring-1 ring-white/5 text-center text-sm text-white/60">
+        Power rankings haven&apos;t been generated yet — the daily job will run tomorrow morning.
+      </div>
+    </section>
+  )
+}
+
+export function PowerRankings({ snapshot }: { snapshot: PowerRankingsSnapshot | null }) {
+  if (!snapshot || snapshot.rankings.length === 0) return <EmptyState />
+  const sorted = [...snapshot.rankings].sort((a, b) => a.rank - b.rank)
   return (
     <section aria-label="Power Rankings">
       <div className="mb-5">
@@ -127,7 +143,7 @@ export function PowerRankings() {
           Power Rankings
         </h2>
         <div className="mt-2">
-          <UpdatedAtLine />
+          <UpdatedAtLine when={snapshot.computedAt} />
         </div>
       </div>
 

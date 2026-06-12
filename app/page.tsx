@@ -1,4 +1,5 @@
 import { readCurrentStandings, readMatches, readSyncStatus } from "@/lib/standings/snapshot"
+import { readCurrentPowerRankings } from "@/lib/powerRankings/store"
 import { isInWindow, nextKickoff } from "@/lib/windows/windows"
 import { SCHEDULE } from "@/lib/config/schedule"
 import { MEMBERS } from "@/lib/config/members"
@@ -17,11 +18,12 @@ export const dynamic = "force-dynamic"
 
 export default async function Home() {
   const now = new Date()
-  const [snapshot, sync, matches, draftBoardData] = await Promise.all([
+  const [snapshot, sync, matches, draftBoardData, powerRankings] = await Promise.all([
     readCurrentStandings(),
     readSyncStatus(),
     readMatches(),
     loadDraftBoardData(),
+    readCurrentPowerRankings(),
   ])
   const inWindow = isInWindow(now, SCHEDULE)
   const next = nextKickoff(now, SCHEDULE)
@@ -68,7 +70,7 @@ export default async function Home() {
             <FixturesGrid members={MEMBERS} matches={matches ?? []} />
           ),
           draft: <DraftBoard initialData={draftBoardData} />,
-          power: <PowerRankings />,
+          power: <PowerRankings snapshot={powerRankings} />,
         }}
       />
     </main>

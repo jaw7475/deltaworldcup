@@ -11,10 +11,6 @@ import {
   type PlayerTier,
   type PlayerToWatch,
 } from "@/lib/config/playersToWatch"
-import {
-  getPowerRanking,
-  POWER_RANKINGS_UPDATED_AT,
-} from "@/lib/config/powerRankings"
 import { Flag } from "./Flag"
 import { LiveDot } from "./LiveDot"
 import { PositionHistoryChart } from "./PositionHistoryChart"
@@ -228,7 +224,7 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
           history={
             detail.positionHistory.length > 0
               ? detail.positionHistory
-              : strawmanPositionHistory(detail.memberId)
+              : strawmanPositionHistory(detail.memberId, 6)
           }
         />
       </section>
@@ -315,11 +311,8 @@ function strawmanTopScorers(memberId: string): StrawmanScorer[] {
 
 // Strawman position history — used while the tournament hasn't generated
 // any real `standings:history` snapshots yet. Produces a deterministic 8-day
-// series ending at the member's current power-ranking position, with small
-// realistic jitter. Replace with real KV-backed history once games are
-// underway.
-function strawmanPositionHistory(memberId: string) {
-  const endRank = getPowerRanking(memberId)?.rank ?? 6
+// series ending at the member's current standings rank, with small jitter.
+function strawmanPositionHistory(memberId: string, endRank: number) {
   const rng = mulberry32(hashString(memberId))
   const days = 8
   const ranks: number[] = [endRank]
@@ -330,7 +323,7 @@ function strawmanPositionHistory(memberId: string) {
     ranks.push(next)
   }
   ranks.reverse() // oldest → newest
-  const endMs = new Date(POWER_RANKINGS_UPDATED_AT).getTime()
+  const endMs = Date.now()
   const dayMs = 24 * 60 * 60 * 1000
   return ranks.map((rank, i) => ({
     computedAt: new Date(endMs - (days - 1 - i) * dayMs).toISOString(),
