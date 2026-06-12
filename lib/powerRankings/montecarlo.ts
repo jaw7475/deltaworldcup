@@ -205,15 +205,29 @@ export function simulateGroupStage(
     }
   }
 
+  // Skip degenerate groups (would indicate upstream data issue — e.g. a KO
+  // match mis-tagged as GROUP). Better than crashing the whole projection.
+  const validGroups = groups.filter((g) => g.teams.length === 4)
+  if (validGroups.length !== groups.length) {
+    console.warn(
+      `[montecarlo] ${groups.length - validGroups.length} degenerate group(s) skipped:`,
+      groups.filter((g) => g.teams.length !== 4).map((g) => ({
+        size: g.teams.length,
+        teams: g.teams,
+      }))
+    )
+  }
+
   for (let trial = 0; trial < trials; trial++) {
     const thirdPlaceTeams: GroupTeamStanding[] = []
-    for (const g of groups) {
+    for (const g of validGroups) {
       const standings = cloneStandings(g.standings)
       for (const m of g.remaining) {
         const { hGoals, aGoals } = sampleMatch(m, rng)
         applyResult(standings, m.home, m.away, hGoals, aGoals)
       }
       const sorted = sortStandings(standings)
+      if (sorted.length < 4) continue
       firstCount.set(sorted[0].team, (firstCount.get(sorted[0].team) ?? 0) + 1)
       secondCount.set(sorted[1].team, (secondCount.get(sorted[1].team) ?? 0) + 1)
       thirdCount.set(sorted[2].team, (thirdCount.get(sorted[2].team) ?? 0) + 1)

@@ -53,11 +53,21 @@ const TLA_REMAP: Record<string, string> = {
 
 const STAGE_MAP: Record<string, Stage> = {
   GROUP_STAGE: "GROUP",
+  ROUND_OF_32: "R32",
+  ROUND_OF_16: "R16",
   LAST_16: "R16",
   QUARTER_FINALS: "QF",
   SEMI_FINALS: "SF",
   THIRD_PLACE: "THIRD_PLACE",
   FINAL: "FINAL",
+}
+
+function mapStage(raw: string): Stage {
+  const mapped = STAGE_MAP[raw]
+  if (mapped) return mapped
+  // Anything unmapped is more likely a knockout stage we haven't named yet
+  // than a group match — falling back to GROUP poisons group-inference.
+  return raw === "GROUP_STAGE" ? "GROUP" : "R32"
 }
 
 function mapStatus(s: string): MatchStatus {
@@ -100,7 +110,7 @@ export class FootballDataApiProvider implements FootballDataProvider {
 
     return parsed.matches.map((m): Match => {
       const status = mapStatus(m.status)
-      const stage = STAGE_MAP[m.stage] ?? "GROUP"
+      const stage = mapStage(m.stage)
       const rawHome = m.homeTeam.tla ?? m.homeTeam.shortName ?? `T${m.homeTeam.id}`
       const rawAway = m.awayTeam.tla ?? m.awayTeam.shortName ?? `T${m.awayTeam.id}`
       const home = TLA_REMAP[rawHome] ?? rawHome
