@@ -180,7 +180,10 @@ export function buildTeamRecord(matches: Match[], team: TeamCode): TeamRecord {
 
 /**
  * Compute the full league standings.
- * Sort key: (points desc, goalsFor desc, displayName asc).
+ * Sort key: (points desc, goalsFor desc, gamesPlayed asc, displayName asc).
+ * gamesPlayed counts matches each member's teams have started (LIVE or
+ * FINISHED) — more games played is worse on tie, since the unplayed-team
+ * member still has upside.
  * If `prev` is provided, each row's `delta.ranks` = prev.rank - new.rank
  * (positive = climbed up).
  */
@@ -202,6 +205,10 @@ export function computeStandings(
       0
     )
     const goalsFor = teamRecords.reduce((acc, tr) => acc + tr.goalsFor, 0)
+    const gamesPlayed = teamRecords.reduce(
+      (acc, tr) => acc + tr.events.length,
+      0
+    )
     const hasLiveMatch = teamRecords.some((tr) =>
       tr.events.some((e) => e.isLive)
     )
@@ -210,6 +217,7 @@ export function computeStandings(
       displayName: m.displayName,
       points,
       goalsFor,
+      gamesPlayed,
       teamRecords,
       hasLiveMatch,
     }
@@ -219,6 +227,7 @@ export function computeStandings(
   raw.sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points
     if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor
+    if (a.gamesPlayed !== b.gamesPlayed) return a.gamesPlayed - b.gamesPlayed
     return a.displayName.localeCompare(b.displayName)
   })
 
@@ -231,7 +240,8 @@ export function computeStandings(
     if (
       i > 0 &&
       r.points === raw[i - 1].points &&
-      r.goalsFor === raw[i - 1].goalsFor
+      r.goalsFor === raw[i - 1].goalsFor &&
+      r.gamesPlayed === raw[i - 1].gamesPlayed
     ) {
       rank = rows[i - 1].rank
     } else {
