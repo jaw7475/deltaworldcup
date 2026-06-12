@@ -6,6 +6,11 @@ import type {
   TeamRecord,
 } from "@/lib/scoring/types"
 import type { MemberDetail as MemberDetailData, UpcomingFixture } from "@/lib/standings/member"
+import {
+  getPlayersForTeam,
+  type PlayerTier,
+  type PlayerToWatch,
+} from "@/lib/config/playersToWatch"
 import { Flag } from "./Flag"
 import { LiveDot } from "./LiveDot"
 import { PositionHistoryChart } from "./PositionHistoryChart"
@@ -51,18 +56,64 @@ function PointsBadge({ event }: { event: PointEvent }) {
   )
 }
 
-function TeamCard({ record }: { record: TeamRecord }) {
-  const t = getTeam(record.team)
+const TIER_LABEL: Record<PlayerTier, string> = {
+  Legends: "Legend",
+  Superstars: "Star",
+  "Key Players": "Key",
+  "Rising Stars": "Rising",
+  "Unsung Heroes": "Unsung",
+}
+
+const TIER_TONE: Record<PlayerTier, string> = {
+  Legends: "bg-neon-magenta/15 text-neon-magenta ring-neon-magenta/40",
+  Superstars: "bg-neon-cyan/15 text-neon-cyan ring-neon-cyan/40",
+  "Key Players": "bg-neon-yellow/10 text-neon-yellow ring-neon-yellow/30",
+  "Rising Stars": "bg-neon-green/10 text-neon-green ring-neon-green/30",
+  "Unsung Heroes": "bg-white/5 text-white/60 ring-white/15",
+}
+
+function PlayerRow({ player }: { player: PlayerToWatch }) {
   return (
-    <div className="rounded-lg bg-bg-row p-4 ring-1 ring-white/5 flex items-center gap-3">
-      <Flag team={record.team} size={36} />
-      <div className="min-w-0 flex-1">
-        <div className="font-display tracking-wide truncate">
-          {t?.name ?? record.team}
+    <div className="flex items-center gap-3 py-1.5">
+      <span
+        className={`shrink-0 inline-flex items-center justify-center rounded-full px-2 py-0.5 font-display tracking-widest uppercase text-[10px] ring-1 ${TIER_TONE[player.tier]}`}
+      >
+        {TIER_LABEL[player.tier]}
+      </span>
+      <span className="text-sm text-white/85 truncate">{player.name}</span>
+      <span className="ml-auto text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
+        {player.position}
+      </span>
+    </div>
+  )
+}
+
+function TeamWithPlayersCard({ record }: { record: TeamRecord }) {
+  const t = getTeam(record.team)
+  const players = getPlayersForTeam(record.team)
+  return (
+    <div className="rounded-lg bg-bg-row/80 p-4 ring-1 ring-white/5">
+      <div className="flex items-center gap-3">
+        <Flag team={record.team} size={32} />
+        <div className="min-w-0 flex-1">
+          <div className="font-display tracking-wide truncate">
+            {t?.name ?? record.team}
+          </div>
+          <div className="mt-0.5 text-xs uppercase tracking-widest text-white/50">
+            {record.w}W · {record.d}D · {record.l}L · {record.goalsFor} GF
+          </div>
         </div>
-        <div className="mt-0.5 text-xs uppercase tracking-widest text-white/50">
-          {record.w}W · {record.d}D · {record.l}L · {record.goalsFor} GF
-        </div>
+      </div>
+      <div className="mt-3 pt-3 border-t border-white/10">
+        {players.length === 0 ? (
+          <div className="text-xs text-white/40">No featured players yet.</div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {players.map((p) => (
+              <PlayerRow key={`${p.team}-${p.name}`} player={p} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -121,10 +172,7 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
   return (
     <div className="space-y-8">
       <header>
-        <div className="text-xs uppercase tracking-[0.4em] text-white/40 font-display">
-          Member
-        </div>
-        <h2 className="mt-2 font-display text-3xl neon-text-cyan tracking-widest uppercase flex items-center gap-3">
+        <h2 className="font-display text-3xl neon-text-cyan tracking-widest uppercase flex items-center gap-3">
           {detail.displayName}
           {detail.hasLiveMatch && <LiveDot />}
         </h2>
@@ -135,11 +183,11 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
 
       <section>
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
-          Teams
+          Teams + Players to Watch
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {detail.teamRecords.map((tr) => (
-            <TeamCard key={tr.team} record={tr} />
+            <TeamWithPlayersCard key={tr.team} record={tr} />
           ))}
         </div>
       </section>
@@ -148,20 +196,31 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
           Upcoming
         </h3>
-        {detail.upcoming.length === 0 ? (
-          <div className="text-sm text-white/50">No more scheduled matches.</div>
-        ) : (
-          <div className="space-y-2">
-            {detail.upcoming.slice(0, 8).map((f) => (
-              <FixtureRow key={f.matchId + f.team} fix={f} />
-            ))}
-          </div>
-        )}
+        {(() => {
+          // Just the next scheduled match per team — `upcoming` is sorted by
+          // kickoff, so the first occurrence of each team code wins.
+          const seenTeams = new Set<string>()
+          const nextPerTeam = detail.upcoming.filter((f) => {
+            if (seenTeams.has(f.team)) return false
+            seenTeams.add(f.team)
+            return true
+          })
+          if (nextPerTeam.length === 0) {
+            return <div className="text-sm text-white/50">No more scheduled matches.</div>
+          }
+          return (
+            <div className="space-y-2">
+              {nextPerTeam.map((f) => (
+                <FixtureRow key={f.matchId + f.team} fix={f} />
+              ))}
+            </div>
+          )
+        })()}
       </section>
 
       <section>
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
-          Point log
+          Completed
         </h3>
         {detail.pointLog.length === 0 ? (
           <div className="text-sm text-white/50">No matches played yet.</div>
