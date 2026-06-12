@@ -1,6 +1,11 @@
 import { readCurrentStandings, readMatches, readSyncStatus } from "@/lib/standings/snapshot"
 import { readCurrentPowerRankings } from "@/lib/powerRankings/store"
-import { isInWindow, nextKickoff } from "@/lib/windows/windows"
+import {
+  inWindowFromMatches,
+  isInWindow,
+  nextKickoff,
+  nextKickoffFromMatches,
+} from "@/lib/windows/windows"
 import { SCHEDULE } from "@/lib/config/schedule"
 import { MEMBERS } from "@/lib/config/members"
 import { loadDraftBoardData } from "@/lib/draft/load"
@@ -25,8 +30,14 @@ export default async function Home() {
     loadDraftBoardData(),
     readCurrentPowerRankings(),
   ])
-  const inWindow = isInWindow(now, SCHEDULE)
-  const next = nextKickoff(now, SCHEDULE)
+  // Prefer real match data; fall back to SCHEDULE stub if KV hasn't synced yet.
+  const hasMatches = !!matches && matches.length > 0
+  const inWindow = hasMatches
+    ? inWindowFromMatches(now, matches!)
+    : isInWindow(now, SCHEDULE)
+  const next = hasMatches
+    ? nextKickoffFromMatches(now, matches!)
+    : nextKickoff(now, SCHEDULE)
 
   return (
     <main className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12">

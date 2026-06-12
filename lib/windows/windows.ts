@@ -1,4 +1,5 @@
 import type { ScheduledMatch } from "@/lib/config/schedule"
+import type { Match } from "@/lib/scoring/types"
 
 export const MATCH_WINDOW_MIN = 170
 const PRE_ROLL_MIN = 5
@@ -60,4 +61,48 @@ export function nextKickoff(
     }
   }
   return best
+}
+
+/**
+ * Next SCHEDULED match kickoff strictly after `now`, drawn from the live
+ * fixture list. Prefer this over `nextKickoff(_, SCHEDULE)` for UI — SCHEDULE
+ * is a hardcoded stub, `matches` is the real list the cron loads from upstream.
+ * Returns null if no future scheduled match is present.
+ */
+export function nextKickoffFromMatches(
+  now: Date,
+  matches: readonly Match[]
+): Match | null {
+  const nowMs = now.getTime()
+  let best: Match | null = null
+  let bestMs = Infinity
+  for (const m of matches) {
+    if (m.status !== "SCHEDULED") continue
+    const t = new Date(m.utcKickoff).getTime()
+    if (t > nowMs && t < bestMs) {
+      best = m
+      bestMs = t
+    }
+  }
+  return best
+}
+
+/**
+ * True when any match in the live fixture list is LIVE or in its pre-roll /
+ * 170-min window. Mirrors `isInWindow` but consults real match data.
+ */
+export function inWindowFromMatches(
+  now: Date,
+  matches: readonly Match[]
+): boolean {
+  const nowMs = now.getTime()
+  for (const m of matches) {
+    if (m.status === "LIVE") return true
+    if (m.status !== "SCHEDULED") continue
+    const kickoff = new Date(m.utcKickoff).getTime()
+    const start = kickoff - PRE_ROLL_MIN * MS_PER_MIN
+    const end = kickoff + MATCH_WINDOW_MIN * MS_PER_MIN
+    if (nowMs >= start && nowMs < end) return true
+  }
+  return false
 }
