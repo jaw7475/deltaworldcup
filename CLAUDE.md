@@ -49,7 +49,8 @@ pnpm vitest run -t "KO pens win"   # filter by test name
 provider (football-data.org | mock)
         │
         ▼
-   /api/cron/refresh   (Vercel Cron, */5 * * * *)
+   /api/cron/refresh   (external scheduler hits it every 5 min)
+        │  - requires `Authorization: Bearer $CRON_SECRET` (when env var is set)
         │  - short-circuits outside 09:00–01:00 America/Los_Angeles
         │  - short-circuits when not inside any match window (170-min)
         ▼
@@ -80,7 +81,7 @@ The cron handler is the **only** thing that writes to KV. Every other read path 
 
 `lib/config/teams.ts` and `lib/config/members.ts` self-validate at import (48 teams in 12 groups, 12 members × 4 distinct teams, every team assigned exactly once). A misconfigured roster throws at module load, surfaced as a build/runtime error long before any data is computed.
 
-**The current `members.ts` and `teams.ts` are placeholders.** Replace them with the actual league members and the 2026 draw results before launch. The 4-letter TBD codes (`TBD_A4`, `TBD_B4`, …) represent qualification slots still to be decided.
+`members.ts` and `teams.ts` are populated with the real 12 league members and all 48 qualified teams. Team `group` letters are still optional/unset because the official 2026 draw groupings have not been encoded yet — populate the `group` field on each team in `teams.ts` once that's done to unlock group-stage standings views.
 
 ### Intercepting modal route
 
