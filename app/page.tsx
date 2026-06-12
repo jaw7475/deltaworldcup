@@ -7,9 +7,9 @@ import { NextKickoffBanner } from "@/components/NextKickoffBanner"
 import { StaleBadge } from "@/components/StaleBadge"
 import { RulesCard } from "@/components/RulesCard"
 import { Tabs } from "@/components/Tabs"
-import { ComingSoon } from "@/components/ComingSoon"
 import { LiveLegend } from "@/components/LiveLegend"
 import { FixturesGrid } from "@/components/FixturesGrid"
+import { PowerRankings } from "@/components/PowerRankings"
 
 export const dynamic = "force-dynamic"
 
@@ -47,8 +47,7 @@ export default async function Home() {
           { id: "rules", label: "Rules" },
           { id: "table", label: "Table" },
           { id: "fixtures", label: "Fixtures" },
-          { id: "players", label: "Players", comingSoon: true },
-          { id: "power", label: "Power Rankings", comingSoon: true },
+          { id: "power", label: "Power Rankings" },
         ]}
         panels={{
           rules: <RulesCard />,
@@ -64,18 +63,7 @@ export default async function Home() {
           fixtures: (
             <FixturesGrid members={MEMBERS} matches={matches ?? []} />
           ),
-          players: (
-            <ComingSoon
-              title="Players"
-              description="Each league member's deeper page — record, point log, and position history."
-            />
-          ),
-          power: (
-            <ComingSoon
-              title="Power Rankings"
-              description="Subjective rankings layered on top of the raw points table. Coming soon."
-            />
-          ),
+          power: <PowerRankings />,
         }}
       />
     </main>
