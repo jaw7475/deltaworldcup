@@ -1,7 +1,8 @@
 import type { Match, MatchStatus, Score, TeamCode } from "@/lib/scoring/types"
-import type { FootballDataProvider, MatchDetail } from "./types"
+import type { FootballDataProvider, GoalEvent, MatchDetail } from "./types"
 import { SCHEDULE } from "@/lib/config/schedule"
 import { TEAMS } from "@/lib/config/teams"
+import { PLAYERS_TO_WATCH } from "@/lib/config/playersToWatch"
 
 /**
  * In-memory mock provider for local dev and pre-tournament smoke tests.
@@ -25,8 +26,65 @@ export class MockProvider implements FootballDataProvider {
   }
 
   async fetchMatchDetail(matchId: string): Promise<MatchDetail> {
-    return { matchId, goals: [] }
+    const matches = await this.fetchAllMatches()
+    const match = matches.find((m) => m.id === matchId)
+    if (!match || match.status !== "FINISHED") return { matchId, goals: [] }
+    const ft = match.fullTime ?? match.currentScore
+    return { matchId, goals: deterministicGoals(match, ft.home, ft.away) }
   }
+}
+
+/**
+ * Build a plausible goal log: one entry per goal scored, with the scorer drawn
+ * from PLAYERS_TO_WATCH for that team (cycling deterministically by matchId so
+ * the same match always produces the same goals). Falls back to a generic
+ * "Player N" when a team has no watch-list entries.
+ */
+function deterministicGoals(
+  match: Match,
+  homeGoals: number,
+  awayGoals: number
+): GoalEvent[] {
+  const goals: GoalEvent[] = []
+  const seed = hashString(match.id)
+  pushGoals(goals, match.home, homeGoals, seed)
+  pushGoals(goals, match.away, awayGoals, seed + 7)
+  goals.sort((a, b) => a.minute - b.minute)
+  return goals
+}
+
+function pushGoals(
+  out: GoalEvent[],
+  team: TeamCode,
+  count: number,
+  seed: number
+): void {
+  if (count <= 0) return
+  const pool = PLAYERS_TO_WATCH.filter(
+    (p) => p.team === team && (p.position === "FW" || p.position === "MF")
+  )
+  for (let i = 0; i < count; i++) {
+    const scorer =
+      pool.length > 0
+        ? pool[(seed + i) % pool.length].name
+        : `${team} Player ${i + 1}`
+    out.push({
+      team,
+      scorer,
+      minute: 10 + ((seed + i * 17) % 80),
+      isOwnGoal: false,
+      isPenalty: i === 0 && seed % 11 === 0,
+    })
+  }
+}
+
+function hashString(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return h >>> 0
 }
 
 function scheduledOnly(): Match[] {

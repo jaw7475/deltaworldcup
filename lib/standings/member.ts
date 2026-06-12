@@ -8,6 +8,11 @@ import type {
   TeamCode,
   TeamRecord,
 } from "@/lib/scoring/types"
+import {
+  aggregateTopScorers,
+  type GoalsByMatch,
+  type TopScorerRow,
+} from "./goals"
 
 export interface UpcomingFixture {
   matchId: string
@@ -29,12 +34,14 @@ export interface MemberDetail {
   upcoming: UpcomingFixture[]
   pointLog: PointEvent[]
   positionHistory: { computedAt: string; rank: number }[]
+  topScorers: TopScorerRow[]
 }
 
 export function buildMemberDetail(
   memberId: string,
   matches: Match[],
-  history: StandingsSnapshot[]
+  history: StandingsSnapshot[],
+  goalsByMatch: GoalsByMatch
 ): MemberDetail | null {
   const member = getMember(memberId)
   if (!member) return null
@@ -88,6 +95,8 @@ export function buildMemberDetail(
     }
   }
 
+  const topScorers = aggregateTopScorers(goalsByMatch, member.teams)
+
   return {
     memberId,
     displayName: member.displayName,
@@ -99,5 +108,6 @@ export function buildMemberDetail(
     upcoming,
     pointLog,
     positionHistory,
+    topScorers,
   }
 }

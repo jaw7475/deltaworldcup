@@ -4,10 +4,10 @@ import type {
   TeamRecord,
 } from "@/lib/scoring/types"
 import type { MemberDetail as MemberDetailData, UpcomingFixture } from "@/lib/standings/member"
-import { getMember } from "@/lib/config/members"
+import type { TopScorerRow } from "@/lib/standings/goals"
 import {
   getPlayersForTeam,
-  PLAYER_TIER_ORDER,
+  PLAYERS_TO_WATCH,
   type PlayerTier,
   type PlayerToWatch,
 } from "@/lib/config/playersToWatch"
@@ -206,19 +206,15 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
         <h3 className="mb-3 text-xs uppercase tracking-[0.3em] text-white/40 font-display">
           Top scorers
         </h3>
-        {(() => {
-          const scorers = strawmanTopScorers(detail.memberId)
-          if (scorers.length === 0) {
-            return <div className="text-sm text-white/50">No goals yet.</div>
-          }
-          return (
-            <div className="space-y-2">
-              {scorers.map((s) => (
-                <ScorerRow key={`${s.team}-${s.name}`} scorer={s} />
-              ))}
-            </div>
-          )
-        })()}
+        {detail.topScorers.length === 0 ? (
+          <div className="text-sm text-white/50">No goals yet.</div>
+        ) : (
+          <div className="space-y-2">
+            {detail.topScorers.slice(0, 8).map((s) => (
+              <ScorerRow key={`${s.team}-${s.name}`} scorer={s} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section>
@@ -237,23 +233,17 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
   )
 }
 
-interface StrawmanScorer {
-  name: string
-  team: string
-  position: PlayerToWatch["position"]
-  tier: PlayerTier
-  goals: number
-}
-
-function ScorerRow({ scorer }: { scorer: StrawmanScorer }) {
+function ScorerRow({ scorer }: { scorer: TopScorerRow }) {
   const t = getTeam(scorer.team)
+  const meta = lookupPlayerMeta(scorer.name, scorer.team)
   return (
     <div className="flex items-center gap-3 rounded-lg bg-bg-row/60 px-3 py-2 ring-1 ring-white/5">
       <Flag team={scorer.team} size={22} />
       <div className="min-w-0">
         <div className="text-sm text-white/85 truncate">{scorer.name}</div>
         <div className="mt-0.5 text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
-          {t?.name ?? scorer.team} · {scorer.position}
+          {t?.name ?? scorer.team}
+          {meta?.position ? ` · ${meta.position}` : ""}
         </div>
       </div>
       <div className="ml-auto flex items-center gap-1.5">
@@ -268,50 +258,16 @@ function ScorerRow({ scorer }: { scorer: StrawmanScorer }) {
   )
 }
 
-// Strawman top-scorers — until the Match model carries goalscorer data, we
-// fake it from the players-to-watch list. Pick up to 4 high-tier attacking
-// players across the member's roster and assign deterministic goal counts.
-// Replace with real aggregation over Match.goals once that lands.
-function strawmanTopScorers(memberId: string): StrawmanScorer[] {
-  const member = getMember(memberId)
-  if (!member) return []
-
-  const TIER_RANK: Record<PlayerTier, number> = PLAYER_TIER_ORDER.reduce(
-    (acc, t, i) => {
-      acc[t] = i
-      return acc
-    },
-    {} as Record<PlayerTier, number>
+// Best-effort metadata: the goal feed gives "Lionel Messi", PLAYERS_TO_WATCH
+// has position/tier under the same name. Case-insensitive match — names that
+// don't appear on the watch list just render without position.
+function lookupPlayerMeta(name: string, team: string): PlayerToWatch | null {
+  const normalized = name.toLowerCase()
+  return (
+    PLAYERS_TO_WATCH.find(
+      (p) => p.team === team && p.name.toLowerCase() === normalized
+    ) ?? null
   )
-
-  // Attacking-leaning candidates from the full roster, ordered by tier.
-  const candidates: PlayerToWatch[] = []
-  for (const team of member.teams) {
-    for (const p of getPlayersForTeam(team)) {
-      if (p.position === "FW" || p.position === "MF") candidates.push(p)
-    }
-  }
-  candidates.sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier])
-
-  const rng = mulberry32(hashString(`scorers:${memberId}`))
-  const out: StrawmanScorer[] = []
-  for (const p of candidates) {
-    if (out.length >= 4) break
-    // Higher tier → higher probability they've already scored + more goals.
-    const tierRank = TIER_RANK[p.tier]
-    const scoreProb = [0.9, 0.75, 0.5, 0.3, 0.15][tierRank] ?? 0.1
-    if (rng() > scoreProb) continue
-    const maxGoals = [3, 3, 2, 2, 1][tierRank] ?? 1
-    const goals = 1 + Math.floor(rng() * maxGoals)
-    out.push({
-      name: p.name,
-      team: p.team,
-      position: p.position,
-      tier: p.tier,
-      goals,
-    })
-  }
-  return out.sort((a, b) => b.goals - a.goals)
 }
 
 // Strawman position history — used while the tournament hasn't generated

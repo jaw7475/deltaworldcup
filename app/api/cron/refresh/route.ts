@@ -12,6 +12,7 @@ import {
   recordSyncSuccess,
   recordSyncError,
 } from "@/lib/standings/snapshot"
+import { ensureBoxScores } from "@/lib/standings/goals"
 
 const HOURLY_OUTSIDE_WINDOW_MS = 60 * 60 * 1000
 
@@ -67,6 +68,20 @@ export async function GET(request: Request) {
     const snap = buildSnapshot(matches, prev ?? undefined, now)
     await writeCurrentStandings(snap)
     const appended = await maybeAppendHistory(snap)
+
+    // Box-score (goalscorer) backfill — isolated from the main sync so a
+    // detail-endpoint hiccup never blocks standings.
+    let goalsTracked: number | null = null
+    try {
+      const goals = await ensureBoxScores(matches)
+      goalsTracked = Object.keys(goals).length
+    } catch (err) {
+      console.warn(
+        "[cron] box-score backfill failed (continuing):",
+        err instanceof Error ? err.message : err
+      )
+    }
+
     await recordSyncSuccess(now)
 
     return NextResponse.json({
@@ -76,6 +91,7 @@ export async function GET(request: Request) {
       matchesCount: matches.length,
       historyAppended: appended,
       anyLive: snap.rows.some((r) => r.hasLiveMatch),
+      goalsTracked,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

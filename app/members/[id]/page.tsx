@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { buildMemberDetail } from "@/lib/standings/member"
 import { readMatches, readHistory } from "@/lib/standings/snapshot"
+import { readGoalsByMatch } from "@/lib/standings/goals"
 import { MemberDetailView } from "@/components/MemberDetail"
 
 export const dynamic = "force-dynamic"
@@ -12,8 +13,12 @@ export default async function MemberPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [matches, history] = await Promise.all([readMatches(), readHistory()])
-  const detail = buildMemberDetail(id, matches ?? [], history)
+  const [matches, history, goals] = await Promise.all([
+    readMatches(),
+    readHistory(),
+    readGoalsByMatch(),
+  ])
+  const detail = buildMemberDetail(id, matches ?? [], history, goals)
   if (!detail) notFound()
 
   return (
