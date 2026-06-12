@@ -184,10 +184,10 @@ export function DraftBoard({ initialData }: DraftBoardProps) {
                   <th
                     key={i}
                     scope="col"
-                    className="px-1 py-2 border-b border-white/10"
+                    className="px-1 py-2 border-b border-white/10 min-w-[3.5rem]"
                   >
                     <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-[9px] font-display uppercase tracking-widest text-white/40">
+                      <span className="whitespace-nowrap text-[9px] font-display uppercase tracking-widest text-white/40">
                         Slot {i + 1}
                       </span>
                       <span
