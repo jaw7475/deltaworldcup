@@ -1,5 +1,6 @@
 export type TeamCode = string
 
+/** 2026 FIFA World Cup group letter. 12 groups (A–L) of 4 teams each. */
 export type GroupLetter =
   | "A"
   | "B"

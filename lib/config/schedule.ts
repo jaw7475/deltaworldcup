@@ -11,12 +11,9 @@ export interface ScheduledMatch {
 
 /**
  * Hardcoded 2026 World Cup fixture list.
- * REPLACE this stub with the real schedule (or build it from the provider once
- * confirmed in /api/cron/refresh). Keys: `id` must match the provider's match id
- * once the provider is wired so windowing aligns 1:1 with live data.
- *
- * The current entries are placeholders to exercise the windowing logic in tests
- * and the pre-tournament UI banner.
+ * STUB — replace with the real fixture list (or pull from the provider once
+ * confirmed in /api/cron/refresh). `id` must match the provider's match id so
+ * windowing aligns 1:1 with live data.
  */
 export const SCHEDULE: readonly ScheduledMatch[] = [
   {
@@ -24,20 +21,20 @@ export const SCHEDULE: readonly ScheduledMatch[] = [
     stage: "GROUP",
     utcKickoff: "2026-06-11T20:00:00Z",
     home: "MEX",
-    away: "TBD_A4",
+    away: "USA",
   },
   {
     id: "wc-2026-2",
     stage: "GROUP",
     utcKickoff: "2026-06-12T19:00:00Z",
     home: "CAN",
-    away: "TBD_A4",
+    away: "ENG",
   },
   {
     id: "wc-2026-final",
     stage: "FINAL",
     utcKickoff: "2026-07-19T19:00:00Z",
-    home: "TBD_A4",
-    away: "TBD_B4",
+    home: "ARG",
+    away: "FRA",
   },
 ] as const

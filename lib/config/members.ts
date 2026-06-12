@@ -10,83 +10,81 @@ export interface Member {
 }
 
 /**
- * 12 league members, each holding 4 teams.
- * REPLACE THIS PLACEHOLDER LIST with the actual league + draw results before launch.
- *
- * Assignments below allocate every one of the 48 TEAMS entries exactly once,
- * which the build-time validator enforces.
+ * 12 league members, each holding 4 teams from the 2026 FIFA World Cup draw.
+ * Source: league spreadsheet (see Image attached to the conversation that
+ * introduced these assignments).
  */
 export const MEMBERS: readonly Member[] = [
   {
-    id: "member-1",
-    displayName: "Member 1",
-    teams: ["CAN", "ARG", "FRA", "POR"],
+    id: "matt",
+    displayName: "Matt",
+    teams: ["ENG", "JPN", "EGY", "UZB"],
     accentColor: "#00f5d4",
   },
   {
-    id: "member-2",
-    displayName: "Member 2",
-    teams: ["MEX", "BRA", "ENG", "NED"],
-    accentColor: "#ff006e",
-  },
-  {
-    id: "member-3",
-    displayName: "Member 3",
-    teams: ["USA", "GER", "ESP", "BEL"],
+    id: "zach-m",
+    displayName: "Zach M",
+    teams: ["BRA", "USA", "ALG", "RSA"],
     accentColor: "#fee440",
   },
   {
-    id: "member-4",
-    displayName: "Member 4",
-    teams: ["TBD_A4", "TBD_B4", "TBD_C4", "TBD_D4"],
+    id: "josh-g-andrew-b",
+    displayName: "Josh G / Andrew B",
+    teams: ["ESP", "SEN", "PAR", "KSA"],
+    accentColor: "#ff006e",
+  },
+  {
+    id: "jesse",
+    displayName: "Jesse",
+    teams: ["COL", "IRN", "SWE", "IRQ"],
     accentColor: "#b16cff",
   },
   {
-    id: "member-5",
-    displayName: "Member 5",
-    teams: ["ITA", "URU", "COL", "MAR"],
+    id: "spencer",
+    displayName: "Spencer",
+    teams: ["NED", "TUR", "COD", "QAT"],
     accentColor: "#9bff66",
   },
   {
-    id: "member-6",
-    displayName: "Member 6",
-    teams: ["CRO", "KOR", "SUI", "SEN"],
+    id: "jake",
+    displayName: "Jake",
+    teams: ["GER", "AUT", "CAN", "CPV"],
     accentColor: "#7dd3fc",
   },
   {
-    id: "member-7",
-    displayName: "Member 7",
-    teams: ["JPN", "DEN", "AUS", "POL"],
-    accentColor: "#ff006e",
-  },
-  {
-    id: "member-8",
-    displayName: "Member 8",
-    teams: ["TBD_E4", "TBD_F4", "TBD_G4", "TBD_H4"],
-    accentColor: "#fee440",
-  },
-  {
-    id: "member-9",
-    displayName: "Member 9",
-    teams: ["IRN", "TUN", "GHA", "QAT"],
+    id: "zach-d",
+    displayName: "Zach D",
+    teams: ["FRA", "SUI", "NOR", "CUW"],
     accentColor: "#00f5d4",
   },
   {
-    id: "member-10",
-    displayName: "Member 10",
-    teams: ["ECU", "CRC", "CMR", "RSA"],
+    id: "josh-w",
+    displayName: "Josh W",
+    teams: ["CRO", "URU", "CZE", "BIH"],
+    accentColor: "#fee440",
+  },
+  {
+    id: "danny",
+    displayName: "Danny",
+    teams: ["ARG", "MEX", "PAN", "NZL"],
+    accentColor: "#ff006e",
+  },
+  {
+    id: "zach-f",
+    displayName: "Zach F",
+    teams: ["MAR", "ECU", "SCO", "JOR"],
     accentColor: "#b16cff",
   },
   {
-    id: "member-11",
-    displayName: "Member 11",
-    teams: ["SRB", "WAL", "KSA", "PAR"],
+    id: "dan",
+    displayName: "Dan",
+    teams: ["POR", "KOR", "TUN", "GHA"],
     accentColor: "#9bff66",
   },
   {
-    id: "member-12",
-    displayName: "Member 12",
-    teams: ["TBD_I4", "TBD_J4", "TBD_K4", "TBD_L4"],
+    id: "andrew-s",
+    displayName: "Andrew S",
+    teams: ["BEL", "AUS", "CIV", "HAI"],
     accentColor: "#7dd3fc",
   },
 ] as const

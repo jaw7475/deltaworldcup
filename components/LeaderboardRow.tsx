@@ -71,8 +71,15 @@ export function LeaderboardRow({ row }: LeaderboardRowProps) {
           <div className="font-display text-base sm:text-lg tracking-wide truncate">
             {member?.displayName ?? row.memberId}
           </div>
-          <div className="mt-1.5 flex gap-1.5">
-            {member?.teams.map((t) => <Flag key={t} team={t} size={24} />)}
+          <div className="mt-2 flex gap-3">
+            {member?.teams.map((t) => (
+              <div key={t} className="flex flex-col items-center gap-1">
+                <Flag team={t} size={24} />
+                <span className="font-display text-[10px] tracking-[0.15em] text-white/55">
+                  {t}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
