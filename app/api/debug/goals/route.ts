@@ -3,6 +3,17 @@ import { readGoalsByMatch } from "@/lib/standings/goals"
 import { readMatches } from "@/lib/standings/snapshot"
 import { getProvider } from "@/lib/providers"
 
+async function fetchRaw(matchId: string): Promise<unknown> {
+  const token = process.env.FOOTBALL_DATA_TOKEN
+  if (!token) return { error: "no FOOTBALL_DATA_TOKEN env" }
+  const res = await fetch(`https://api.football-data.org/v4/matches/${matchId}`, {
+    headers: { "X-Auth-Token": token },
+    cache: "no-store",
+  })
+  if (!res.ok) return { status: res.status, statusText: res.statusText }
+  return res.json()
+}
+
 export const dynamic = "force-dynamic"
 
 // Temporary diagnostic — surfaces the goal store + a raw provider fetch for the
@@ -29,11 +40,15 @@ export async function GET(request: Request) {
   if (probe && finished.length > 0) {
     const match = finished[0]
     try {
-      const detail = await getProvider().fetchMatchDetail(match.id)
+      const [detail, raw] = await Promise.all([
+        getProvider().fetchMatchDetail(match.id),
+        fetchRaw(match.id),
+      ])
       probeResult = {
         matchId: match.id,
         teams: `${match.home} vs ${match.away}`,
         detail,
+        raw,
       }
     } catch (err) {
       probeResult = {
