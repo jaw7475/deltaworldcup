@@ -14,9 +14,9 @@ const ACCENT_CLASS: Record<RuleProps["accent"], string> = {
 
 function Rule({ label, accent, children }: RuleProps) {
   return (
-    <li className="flex items-start gap-3">
+    <li className="flex flex-col sm:flex-row items-start gap-1.5 sm:gap-3">
       <span
-        className={`shrink-0 mt-0.5 inline-flex items-center justify-center rounded-full px-2 py-0.5 ring-1 font-display tracking-widest uppercase text-[10px] ${ACCENT_CLASS[accent]}`}
+        className={`self-start shrink-0 sm:mt-0.5 inline-flex items-center justify-center rounded-full px-2 py-0.5 ring-1 font-display tracking-widest uppercase text-[10px] ${ACCENT_CLASS[accent]}`}
       >
         {label}
       </span>

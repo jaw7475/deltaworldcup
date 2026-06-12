@@ -49,15 +49,15 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
         boxShadow: `inset 0 0 0 1px ${ringInset}, 0 0 24px -10px ${ambientGlow}`,
       }}
     >
-      <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-3 sm:gap-5">
-        <div className={`font-display text-2xl tracking-widest w-14 sm:w-16 shrink-0 ${color}`}>
+      <div className="flex items-start gap-3 sm:gap-5">
+        <div className={`font-display text-2xl tracking-widest w-[4.5rem] sm:w-16 shrink-0 ${color}`}>
           {label}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="font-display text-base sm:text-lg tracking-wide truncate">
-              {member?.displayName ?? ranking.memberId}
+            <div className="font-display text-base sm:text-lg tracking-wide leading-tight whitespace-pre-line">
+              {(member?.displayName ?? ranking.memberId).replace(" / ", " /\n")}
             </div>
             <DeltaPill delta={ranking.delta} />
           </div>
@@ -73,12 +73,12 @@ function RankingCard({ ranking }: { ranking: PowerRanking }) {
           </div>
         </div>
 
-        <div className="basis-full sm:basis-auto flex sm:flex-col items-end justify-end leading-none shrink-0 sm:w-[5.5rem] gap-2 sm:gap-0">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
-            xPts
-          </span>
-          <span className="sm:mt-1 font-display text-3xl sm:text-4xl tabular-nums tracking-tight neon-text-cyan">
+        <div className="flex flex-col items-end leading-none shrink-0 w-16 sm:w-[5.5rem]">
+          <span className="font-display text-3xl sm:text-4xl tabular-nums tracking-tight neon-text-cyan">
             {ranking.expectedPoints.toFixed(1)}
+          </span>
+          <span className="mt-1 text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
+            xPts
           </span>
         </div>
       </div>

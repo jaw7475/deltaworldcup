@@ -28,7 +28,7 @@ interface FixturesGridProps {
 const DEFAULT_START = "2026-06-10"
 const DEFAULT_END = "2026-07-20"
 
-const MEMBER_COL_PX = 180
+const MEMBER_COL_PX = 156
 const FLAG_COL_PX = 48
 const DATE_COL_PX = 72
 const TEAM_ROW_PX = 60
@@ -178,8 +178,8 @@ function MemberBlock({
           boxShadow: "4px 0 12px -6px rgba(0,0,0,0.6)",
         }}
       >
-        <div className="font-display text-base tracking-wide truncate">
-          {member.displayName}
+        <div className="font-display text-base tracking-wide leading-tight whitespace-pre-line">
+          {member.displayName.replace(" / ", " /\n")}
         </div>
         <NextFixtureLine
           match={next}

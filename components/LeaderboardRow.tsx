@@ -81,13 +81,13 @@ export function LeaderboardRow({ row }: LeaderboardRowProps) {
           boxShadow: `inset 0 0 0 1px ${ringInset}, 0 0 24px -10px ${ambientGlow}`,
         }}
       >
-        <div className={`font-display text-2xl tracking-widest w-14 sm:w-16 shrink-0 ${color}`}>
+        <div className={`font-display text-2xl tracking-widest w-[4.5rem] sm:w-16 shrink-0 ${color}`}>
           {label}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="font-display text-base sm:text-lg tracking-wide truncate">
-            {member?.displayName ?? row.memberId}
+          <div className="font-display text-base sm:text-lg tracking-wide leading-tight whitespace-pre-line">
+            {(member?.displayName ?? row.memberId).replace(" / ", " /\n")}
           </div>
           <div className="mt-2 flex gap-2.5 sm:gap-3">
             {member?.teams.map((t) => (
