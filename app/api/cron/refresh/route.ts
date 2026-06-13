@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server"
 import { getProvider } from "@/lib/providers"
 import { SCHEDULE } from "@/lib/config/schedule"
-import { isInWindow, isPacificActiveHours } from "@/lib/windows/windows"
+import {
+  inWindowFromMatches,
+  isInWindow,
+  isPacificActiveHours,
+} from "@/lib/windows/windows"
 import { buildSnapshot } from "@/lib/standings/compute"
 import {
   readCurrentStandings,
+  readMatches,
   writeCurrentStandings,
   writeMatches,
   maybeAppendHistory,
@@ -42,8 +47,13 @@ export async function GET(request: Request) {
   }
 
   // 2. If outside a match window, do a lightweight hourly sync to catch
-  //    postponements / corrections.
-  const inWindow = isInWindow(now, SCHEDULE)
+  //    postponements / corrections. Prefer the live fixture list (real upstream
+  //    data) — SCHEDULE is a hardcoded stub that doesn't reflect the real draw.
+  const persistedMatches = await readMatches()
+  const inWindow =
+    persistedMatches && persistedMatches.length > 0
+      ? inWindowFromMatches(now, persistedMatches)
+      : isInWindow(now, SCHEDULE)
   if (!force && !inWindow) {
     const current = await readCurrentStandings()
     if (current) {
