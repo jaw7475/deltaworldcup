@@ -35,7 +35,7 @@ export function StaleBadge({
       className="inline-flex items-center gap-2 rounded-full bg-neon-yellow/10 px-3 py-1 ring-1 ring-neon-yellow/40 text-neon-yellow font-display tracking-widest uppercase text-[10px]"
     >
       <span className="inline-block size-1.5 rounded-full bg-neon-yellow" />
-      Data may be stale · {ageLabel}
+      Data may be stale · {ageLabel} — try refreshing
     </div>
   )
 }
