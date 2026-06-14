@@ -66,9 +66,12 @@ provider (football-data.org | mock)
    /api/cron/refresh           (external scheduler hits it every 2 min)
         │  - requires `Authorization: Bearer $CRON_SECRET` (when env var is set)
         │  - short-circuits outside 09:00–01:00 America/Los_Angeles
-        │  - short-circuits when not inside any match window (170-min, computed
-        │    from the persisted match list — falls back to SCHEDULE stub only
-        │    when KV hasn't synced yet)
+        │  - in-window (170-min around any kickoff, computed from the persisted
+        │    match list — falls back to SCHEDULE stub only when KV hasn't
+        │    synced yet): fires every invocation, so every 2 min
+        │  - out-of-window: throttled to once per 15 min via the
+        │    OUT_OF_WINDOW_MIN_INTERVAL_MS gate, so post-match score
+        │    corrections that football-data backfills late still get pulled
         │  - writes matches:all, standings:current/history, sync:*, scorers:list
         ▼
    /api/cron/power-rankings    (external scheduler hits it independently)
