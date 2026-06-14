@@ -19,7 +19,7 @@ import {
 } from "@/lib/standings/snapshot"
 import { refreshTopScorers } from "@/lib/standings/goals"
 
-const HOURLY_OUTSIDE_WINDOW_MS = 60 * 60 * 1000
+const OUT_OF_WINDOW_MIN_INTERVAL_MS = 15 * 60 * 1000
 
 export async function GET(request: Request) {
   // Auth optional so local dev (no CRON_SECRET in env) can still hit this endpoint.
@@ -46,9 +46,11 @@ export async function GET(request: Request) {
     })
   }
 
-  // 2. If outside a match window, do a lightweight hourly sync to catch
-  //    postponements / corrections. Prefer the live fixture list (real upstream
-  //    data) — SCHEDULE is a hardcoded stub that doesn't reflect the real draw.
+  // 2. If outside a match window, throttle to one sync per 15 min to catch
+  //    postponements + post-match score corrections that football-data sometimes
+  //    backfills hours after the final whistle. Prefer the live fixture list
+  //    (real upstream data) — SCHEDULE is a hardcoded stub that doesn't reflect
+  //    the real draw.
   const persistedMatches = await readMatches()
   const inWindow =
     persistedMatches && persistedMatches.length > 0
@@ -58,7 +60,7 @@ export async function GET(request: Request) {
     const current = await readCurrentStandings()
     if (current) {
       const ageMs = now.getTime() - new Date(current.computedAt).getTime()
-      if (ageMs < HOURLY_OUTSIDE_WINDOW_MS) {
+      if (ageMs < OUT_OF_WINDOW_MIN_INTERVAL_MS) {
         return NextResponse.json({
           ok: true,
           skipped: "outside-window-recent-sync",
