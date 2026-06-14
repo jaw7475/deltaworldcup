@@ -69,7 +69,7 @@ export function Leaderboard({ initialSnapshot, initialInWindow }: LeaderboardPro
     }
 
     function scheduleNext() {
-      const delayMs = inWindow ? 30_000 : 5 * 60_000
+      const delayMs = inWindow ? 30_000 : 60_000
       timer = setTimeout(async () => {
         await fetchOnce()
         if (!cancelled) scheduleNext()

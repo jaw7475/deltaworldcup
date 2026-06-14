@@ -82,7 +82,7 @@ provider (football-data.org | mock)
    KV
         │
         ▼
-   /api/standings        ←   <Leaderboard> + <NextKickoffBanner> poll (30s in-window, 5m out)
+   /api/standings        ←   <Leaderboard> + <NextKickoffBanner> poll (30s in-window, 60s out)
    /api/member/[id]      ←   detail page + intercepting modal route
    /api/draft-board      ←   <DraftBoard> poll
    /api/power-rankings   ←   <PowerRankings> read on initial render

@@ -42,7 +42,8 @@ export function NextKickoffBanner({
   }, [])
 
   // Re-poll /api/standings on the same cadence as the leaderboard: 30s when
-  // a match is live, 5m otherwise (the cron itself only fires every 5m).
+  // a match is live, 60s otherwise — keeps the "Match in progress" flip and
+  // countdown fresh without hammering KV.
   useEffect(() => {
     let cancelled = false
     let timer: ReturnType<typeof setTimeout> | null = null
@@ -61,7 +62,7 @@ export function NextKickoffBanner({
     }
 
     function scheduleNext() {
-      const delayMs = inWindow ? 30_000 : 5 * 60_000
+      const delayMs = inWindow ? 30_000 : 60_000
       timer = setTimeout(async () => {
         await fetchOnce()
         if (!cancelled) scheduleNext()
