@@ -40,26 +40,36 @@ export interface BlurbWriter {
   writeBlurbs(inputs: BlurbInput[]): Promise<Map<string, string>>
 }
 
-const SYSTEM_PROMPT = `You write daily power-ranking blurbs for a 12-person fantasy football league betting on the 2026 FIFA World Cup. Each league member owns 4 national teams; the member whose teams accumulate the most points (3 win / 1 draw, scored across group + knockout rounds) wins the #1 draft pick in the fantasy football league.
+const SYSTEM_PROMPT = `You write daily power-ranking blurbs for a 12-person fantasy football league betting on the 2026 FIFA World Cup. Each league member was RANDOMLY ASSIGNED 4 national teams — they did not pick, draft, or build their roster. The member whose teams accumulate the most points (3 win / 1 draw, scored across group + knockout rounds) wins the #1 draft pick in the fantasy football league.
 
-Voice: punchy, opinionated, soccer-literate. Think a Bill Simmons / Athletic-columnist tone — bold takes, specific player references by name, dry jokes, vivid imagery. EXACTLY 4 sentences per member (this is a hard requirement — not 2, not 3, not 5). Reference recent results when they exist (cite specific scores and minutes). Reference at least 2 of the 4 teams on the roster by name, calling out star players for at least one of them. If the rank moved up or down, work that in. Avoid clichés like "rollercoaster" or "stay tuned" or "anybody's game".
+Voice: punchy, opinionated, soccer-literate. Bill Simmons / Athletic-columnist tone — bold takes, specific scorers, dry jokes, vivid imagery. EXACTLY 4 sentences per blurb (hard requirement — count them).
 
-Examples of the right tone (3rd person, opinionated, specific):
-- "Mbappé and Haaland on the same roster is borderline cheating, and France's 3-1 stroll past Croatia already proved the point — two of the three highest-xG attackers in world football pulling for the same draft pick."
-- "This roster reads as a 4-decent-teams strategy that left no upside on the table — Czechia and Bosnia round out the most generic lineup on the board."
-- "Portugal needed a late winner to beat Bosnia 2-1, which is exactly the grinding-out style this lineup is built on, and Korea grabbed a respectable 1-1 with Belgium to bank another quiet point."
+What to write about, in priority order:
+1. RECENT RESULTS are the headline. The first 2–3 sentences MUST be about what happened in this member's matches since the last refresh — cite specific scores, scorers, and minutes from the box scores. If multiple matches finished, cover at least the most impactful one in detail; touch on the other(s) briefly.
+2. The 4th sentence can hit rank movement, momentum, or what's next.
+3. Roster context is a LAST RESORT — use it only when the member had NO matches since the last refresh. Even then, treat the four teams as a snapshot of what they're stuck with, not a strategy they chose.
+
+Random-assignment rule — CRITICAL:
+- Teams were assigned by random draw. Never frame the roster as a "strategy", "pick", "draft", "ticket", "gamble", "bet on X", "went all-in on Y", or anything implying intentional construction. No "this lineup left upside on the table", no "banked on Brazil", no "the 4-decent-teams strategy".
+- Praise or blame the TEAMS, never the member's selection. ✓ "Croatia is dragging this lineup down." ✗ "Matt's roster choices look weak."
+
+Voice examples (right tone — result-led, no strategy framing):
+- "France's 3-1 stroll past Croatia did the heavy lifting — Mbappé buried the opener inside 12 minutes and Croatia's back line never recovered. Argentina chipped in another point with a tidy 1-0 over Mexico, and suddenly this slate is humming."
+- "Portugal grinding out a 2-1 over Bosnia on a 89th-minute Bruno Fernandes header is the kind of late equity that doesn't show up on the highlight reel but quietly compounds. Korea added a 1-1 with Belgium — not pretty, but a point banked, and the rank holds steady at 5th."
+- "Brutal matchday for these four — Czechia drawn 0-0, Cape Verde overrun 0-3, and nothing on the board to soften it. The projection slips two slots and the path back gets narrower with every fixture played."
+- "Quiet day — no matches in the last 24 hours for this slate. Germany kicks off tomorrow against Senegal with a chance to swing the projection, and Argentina's group is opening up after Mexico's slip last night."
 
 Hard rules:
-- NEVER use "you", "your", "you're", "you've", "yours". Always write in the third person. Refer to the member by their displayName (e.g., "Matt's lineup", "Dan's roster"), or by descriptor ("this roster", "this ticket", "the GER/AUT/CAN/CPV portfolio").
+- NEVER use "you", "your", "you're", "you've", "yours". Third person only. Refer to the member by their displayName (e.g., "Matt's slate", "Dan's lineup"), or by descriptor ("this lineup", "these four teams").
 - NEVER directly address the reader.
-- NEVER use "stay tuned", "anything is possible", "watch this space", "rollercoaster", "Cinderella story", "wild ride".
+- NEVER use "stay tuned", "anything is possible", "watch this space", "rollercoaster", "Cinderella story", "wild ride", "anybody's game".
 - Exactly 4 sentences per blurb. Count them before responding.
 
-Grounding rules — VERY IMPORTANT, to avoid factually wrong references:
-- For each member, a Roster section lists notable current players per team. When naming a player you MUST use only names from (a) that member's Roster section OR (b) the Recent box scores section below.
-- Players from box scores are fair game even if they are NOT in the Roster section — anyone who actually scored in a recent match can be named.
-- Do NOT pull player names from memory (no Benzema-on-France, no retired-Čech-on-Czechia, etc.). If unsure whether a name fits, omit it and lean on team-level commentary instead.
-- For box scores, you can quote specific goals and minutes (e.g., "Son's 67th-minute clincher", "Schick's stoppage-time consolation"). Match the minute exactly as given.
+Grounding rules — to avoid factually wrong references:
+- When naming a player, use ONLY names from (a) that member's Roster section OR (b) the Recent matches box scores.
+- Players from box scores are fair game even if NOT in the Roster section — anyone who actually scored can be named.
+- Do NOT pull player names from memory. If unsure whether a name fits, omit it and lean on team-level commentary.
+- Match minutes EXACTLY as given in the box score (e.g., "Son's 67th-minute clincher", "Schick's stoppage-time consolation").
 
 Critical: respond with VALID JSON only — no preamble, no markdown fence — matching the schema {"blurbs": [{"memberId": "<id>", "blurb": "<text>"}, ...]}. Include every memberId you were given, no extras.`
 
@@ -69,21 +79,42 @@ function buildUserPrompt(inputs: BlurbInput[]): string {
     `Write a 4-sentence power-ranking blurb for each of these ${inputs.length} members. Return JSON {"blurbs":[...]}. Include every memberId.`
   )
   lines.push("")
+  lines.push(
+    "REMINDER: Lead each blurb with the member's RECENT MATCHES (box scores below). Roster lists are supporting context — only lean on them when the member had zero matches since the last refresh. Teams were randomly assigned; never frame the roster as a chosen strategy."
+  )
+  lines.push("")
   for (const m of inputs) {
     const deltaStr =
       m.delta === 0
-        ? "no change from yesterday"
+        ? "no change since last refresh"
         : m.delta > 0
-          ? `up ${m.delta} from yesterday`
-          : `down ${Math.abs(m.delta)} from yesterday`
+          ? `up ${m.delta} since last refresh`
+          : `down ${Math.abs(m.delta)} since last refresh`
     lines.push(`### ${m.displayName} (id: ${m.memberId})`)
-    lines.push(`Teams: ${m.teams.join(", ")}`)
-    lines.push(`Rank: ${m.rank}/12 (${deltaStr})`)
+    lines.push(`Teams (random assignment): ${m.teams.join(", ")}`)
     lines.push(
-      `Expected points: ${m.expectedPoints.toFixed(1)} (banked ${m.bankedPoints}, projected from remaining matches ${m.remainingXPts.toFixed(1)})`
+      `Rank: ${m.rank}/12 (${deltaStr}); banked ${m.bankedPoints} pts; projected total ${m.expectedPoints.toFixed(1)} (remaining xPts ${m.remainingXPts.toFixed(1)})`
     )
-    lines.push(`Results since last refresh: ${m.resultsSinceLast || "none"}`)
-    lines.push("Roster (allowed player names):")
+    lines.push("")
+    // Recent activity first — this is what the blurb should lead with.
+    if (m.boxScoreLines.length > 0) {
+      lines.push(
+        "RECENT MATCHES — LEAD WITH THESE (cite scores, scorers, minutes; scorers below are fair to name):"
+      )
+      for (const line of m.boxScoreLines) {
+        lines.push(`  ${line}`)
+      }
+      lines.push(`Result summary: ${m.resultsSinceLast || "none"}`)
+    } else {
+      lines.push(
+        "RECENT MATCHES: none since last refresh. Fall back to a brief look-ahead or a snapshot of where these four teams currently stand — do NOT critique the roster as a strategy."
+      )
+    }
+    lines.push("")
+    // Roster last — supporting context for player-name grounding, not the lead.
+    lines.push(
+      "Roster (supporting context only; do NOT lead with roster takes; allowed player names):"
+    )
     for (const r of m.roster) {
       if (r.players.length === 0) {
         lines.push(`  ${r.team}: (no notable players listed — refer to team only)`)
@@ -93,14 +124,6 @@ function buildUserPrompt(inputs: BlurbInput[]): string {
           .join(", ")
         lines.push(`  ${r.team}: ${names}`)
       }
-    }
-    if (m.boxScoreLines.length > 0) {
-      lines.push("Recent box scores (scorers in these are also fair to name):")
-      for (const line of m.boxScoreLines) {
-        lines.push(`  ${line}`)
-      }
-    } else {
-      lines.push("Recent box scores: none since last refresh")
     }
     lines.push("")
   }
