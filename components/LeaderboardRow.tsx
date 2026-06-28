@@ -134,7 +134,7 @@ export function LeaderboardRow({ row, statusByTeam }: LeaderboardRowProps) {
           </Stat>
 
           <div
-            className="flex flex-col items-end leading-none pl-1 shrink-0 w-[4.5rem] sm:w-[5rem]"
+            className="flex flex-col items-end leading-none pl-1 shrink-0 w-[5.5rem] sm:w-[6.25rem]"
             title={liveMatchTitle}
           >
             <span className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-display">
