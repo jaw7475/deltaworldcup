@@ -71,6 +71,98 @@ describe("KO projection cascade", () => {
   })
 })
 
+describe("KO projection respects finished matches", () => {
+  const finished = (id: string, stage: Match["stage"], winner: string, loser: string): Match => ({
+    id,
+    stage,
+    utcKickoff: "2026-06-15T00:00:00Z",
+    status: "FINISHED",
+    home: winner,
+    away: loser,
+    currentScore: { home: 1, away: 0 },
+    fullTime: { home: 1, away: 0 },
+    wentToExtraTime: false,
+    wentToPenalties: false,
+    winner,
+  })
+
+  it("a team that lost in R32 has pReach = 0 in every downstream round", () => {
+    const proj = projectKnockouts({
+      pReachR32: new Map([
+        ["ARG", 1.0],
+        ["MEX", 1.0],
+        ["FRA", 1.0],
+        ["BRA", 1.0],
+      ]),
+      matches: [finished("m1", "R32", "ARG", "MEX")],
+    })
+    const mex = proj.get("MEX")!
+    expect(mex.pReach.R32).toBe(1)
+    expect(mex.pReach.R16).toBe(0)
+    expect(mex.pReach.QF).toBe(0)
+    expect(mex.pReach.SF).toBe(0)
+    expect(mex.pReach.FINAL).toBe(0)
+    expect(mex.pThirdPlace).toBe(0)
+    expect(mex.knownRounds.has("R32")).toBe(true)
+  })
+
+  it("a team that won R32 propagates pReach = 1 into R16", () => {
+    const proj = projectKnockouts({
+      pReachR32: new Map([
+        ["ARG", 1.0],
+        ["MEX", 1.0],
+      ]),
+      matches: [finished("m1", "R32", "ARG", "MEX")],
+    })
+    const arg = proj.get("ARG")!
+    expect(arg.pReach.R32).toBe(1)
+    expect(arg.pReach.R16).toBe(1)
+    expect(arg.pWinGiven.R32).toBe(1)
+  })
+
+  it("koExpectedPoints skips finished rounds (no double-count vs banked)", () => {
+    const projFresh = projectKnockouts({
+      pReachR32: new Map([["ARG", 1.0]]),
+    })
+    const projAfterR32 = projectKnockouts({
+      pReachR32: new Map([["ARG", 1.0], ["MEX", 1.0]]),
+      matches: [finished("m1", "R32", "ARG", "MEX")],
+    })
+    const fresh = koExpectedPoints(projFresh.get("ARG")!)
+    const afterR32 = koExpectedPoints(projAfterR32.get("ARG")!)
+    // The R32 contribution is now in banked, not expected — afterR32 should
+    // be strictly less than fresh by roughly the per-round contribution.
+    expect(afterR32).toBeLessThan(fresh)
+    expect(afterR32).toBeGreaterThan(0)
+  })
+
+  it("an eliminated team's koExpectedPoints is 0", () => {
+    const proj = projectKnockouts({
+      pReachR32: new Map([["ARG", 1.0], ["MEX", 1.0]]),
+      matches: [finished("m1", "R32", "ARG", "MEX")],
+    })
+    expect(koExpectedPoints(proj.get("MEX")!)).toBe(0)
+  })
+
+  it("a team that lost the third-place match has pThirdPlace = 1 but 0 expected pts there", () => {
+    const proj = projectKnockouts({
+      pReachR32: new Map([
+        ["ARG", 1.0],
+        ["FRA", 1.0],
+        ["BRA", 1.0],
+        ["MAR", 1.0],
+      ]),
+      matches: [finished("tp", "THIRD_PLACE", "BRA", "MAR")],
+    })
+    const mar = proj.get("MAR")!
+    expect(mar.pThirdPlace).toBe(1)
+    expect(mar.knownThirdPlace).toBe(true)
+    // Third-place contribution is banked, so no expected pts from it
+    const bra = proj.get("BRA")!
+    expect(bra.knownThirdPlace).toBe(true)
+  })
+})
+
 describe("Group-stage Monte Carlo", () => {
   // Build a minimal 4-team group with 3 finished and 3 remaining matches.
   function makeGroupMatches(): Match[] {

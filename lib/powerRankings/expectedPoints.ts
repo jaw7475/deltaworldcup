@@ -67,7 +67,10 @@ export function computeMemberXPts(args: {
   trials?: number
 }): MemberXPts[] {
   const groupSim = simulateGroupStage(args.matches, args.trials ?? 10_000)
-  const koProj = projectKnockouts({ pReachR32: groupSim.pAdvance })
+  const koProj = projectKnockouts({
+    pReachR32: groupSim.pAdvance,
+    matches: args.matches,
+  })
 
   const out: MemberXPts[] = []
   for (const member of MEMBERS) {
