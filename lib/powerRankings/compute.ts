@@ -1,4 +1,5 @@
 import { readMatches, readCurrentStandings } from "@/lib/standings/snapshot"
+import { getTeamStatusMap } from "@/lib/standings/teamStatus"
 import {
   computeMemberXPts,
   rankByXPts,
@@ -75,12 +76,15 @@ export async function computePowerRankings(now: Date): Promise<ComputeResult> {
     )
   }
 
+  const teamStatus = getTeamStatusMap(matches)
+
   const blurbInputs: BlurbInput[] = buildBlurbInputs({
     memberXPts,
     rankings: rankingsMap,
     previousRankings: prevRankingsMap,
     resultsByMember,
     boxScores,
+    teamStatus,
   })
 
   const blurbWriter = getBlurbWriter()
