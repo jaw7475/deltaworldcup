@@ -1,14 +1,16 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Reorder } from "framer-motion"
 import confetti from "canvas-confetti"
-import type { StandingsSnapshot, StandingsRow } from "@/lib/scoring/types"
+import type { Match, StandingsSnapshot, StandingsRow } from "@/lib/scoring/types"
+import { getTeamStatusMap } from "@/lib/standings/teamStatus"
 import { LeaderboardRow } from "./LeaderboardRow"
 
 interface LeaderboardProps {
   initialSnapshot: StandingsSnapshot | null
   initialInWindow: boolean
+  initialMatches: Match[]
 }
 
 interface StandingsResponse {
@@ -17,14 +19,22 @@ interface StandingsResponse {
   nextKickoff: string | null
   now: string
   sync: { lastRunAt: string | null; lastSuccessAt: string | null; lastError: string | null }
+  matches: Match[]
 }
 
-export function Leaderboard({ initialSnapshot, initialInWindow }: LeaderboardProps) {
+export function Leaderboard({
+  initialSnapshot,
+  initialInWindow,
+  initialMatches,
+}: LeaderboardProps) {
   const [snapshot, setSnapshot] = useState<StandingsSnapshot | null>(initialSnapshot)
   const [inWindow, setInWindow] = useState(initialInWindow)
+  const [matches, setMatches] = useState<Match[]>(initialMatches)
   const previousComputedAtRef = useRef<string | null>(
     initialSnapshot?.computedAt ?? null
   )
+
+  const statusByTeam = useMemo(() => getTeamStatusMap(matches), [matches])
 
   // Fire confetti for any row whose rank improved on a snapshot update.
   useEffect(() => {
@@ -63,6 +73,7 @@ export function Leaderboard({ initialSnapshot, initialInWindow }: LeaderboardPro
         if (cancelled) return
         setSnapshot(json.snapshot)
         setInWindow(json.inWindow)
+        setMatches(json.matches ?? [])
       } catch {
         // Swallow — we'll retry on the next tick.
       }
@@ -110,7 +121,7 @@ export function Leaderboard({ initialSnapshot, initialInWindow }: LeaderboardPro
           layout
           transition={{ type: "spring", stiffness: 320, damping: 30 }}
         >
-          <LeaderboardRow row={row} />
+          <LeaderboardRow row={row} statusByTeam={statusByTeam} />
         </Reorder.Item>
       ))}
     </Reorder.Group>

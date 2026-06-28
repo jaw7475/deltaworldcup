@@ -4,6 +4,7 @@ import type {
   TeamRecord,
 } from "@/lib/scoring/types"
 import type { MemberDetail as MemberDetailData, UpcomingFixture } from "@/lib/standings/member"
+import type { TeamStatus } from "@/lib/standings/teamStatus"
 import {
   getPlayersForTeam,
   type PlayerTier,
@@ -97,23 +98,47 @@ function NextMatchLine({ fix }: { fix: UpcomingFixture }) {
 interface TeamWithPlayersCardProps {
   record: TeamRecord
   nextMatch?: UpcomingFixture
+  status: TeamStatus
 }
 
-function TeamWithPlayersCard({ record, nextMatch }: TeamWithPlayersCardProps) {
+function TeamWithPlayersCard({ record, nextMatch, status }: TeamWithPlayersCardProps) {
   const t = getTeam(record.team)
   const players = getPlayersForTeam(record.team)
+  const isAlive = status === "alive"
+  const isEliminated = status === "eliminated"
+  const cardRing = isAlive
+    ? "ring-1 ring-neon-green/60 shadow-[0_0_18px_-6px_rgba(155,255,102,0.6)]"
+    : "ring-1 ring-white/5"
+  const flagWrap = isEliminated ? "opacity-40 grayscale" : ""
+  const nameClass = isEliminated
+    ? "text-white/30 line-through"
+    : "text-white"
   return (
-    <div className="rounded-lg bg-bg-row/80 p-4 ring-1 ring-white/5 flex flex-col h-full">
+    <div
+      className={`rounded-lg bg-bg-row/80 p-4 flex flex-col h-full ${cardRing}`}
+    >
       <div className="flex items-center gap-3">
-        <Flag team={record.team} size={32} />
+        <span className={`inline-flex ${flagWrap}`}>
+          <Flag team={record.team} size={32} />
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="font-display tracking-wide truncate">
+          <div className={`font-display tracking-wide truncate ${nameClass}`}>
             {t?.name ?? record.team}
           </div>
           <div className="mt-0.5 text-xs uppercase tracking-widest text-white/50">
             {record.w}W · {record.d}D · {record.l}L · {record.goalsFor} GF
           </div>
         </div>
+        {isAlive && (
+          <span className="shrink-0 rounded-full bg-neon-green/15 px-2 py-0.5 font-display text-[10px] uppercase tracking-[0.2em] text-neon-green ring-1 ring-neon-green/40">
+            Alive
+          </span>
+        )}
+        {isEliminated && (
+          <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 font-display text-[10px] uppercase tracking-[0.2em] text-white/50 ring-1 ring-white/15">
+            Out
+          </span>
+        )}
       </div>
       <div className="mt-3 pt-3 border-t border-white/10 flex-1">
         {players.length === 0 ? (
@@ -189,6 +214,7 @@ export function MemberDetailView({ detail }: MemberDetailProps) {
               key={tr.team}
               record={tr}
               nextMatch={nextByTeam.get(tr.team)}
+              status={detail.teamStatuses[tr.team] ?? "active"}
             />
           ))}
         </div>

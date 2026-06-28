@@ -73,6 +73,7 @@ export default async function Home() {
               <Leaderboard
                 initialSnapshot={snapshot}
                 initialInWindow={inWindow}
+                initialMatches={matches ?? []}
               />
               <LiveLegend />
             </>

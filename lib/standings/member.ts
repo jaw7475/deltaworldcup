@@ -13,6 +13,7 @@ import {
   type TopScorers,
   type TopScorerRow,
 } from "./goals"
+import { getTeamStatusMap, type TeamStatus } from "./teamStatus"
 
 export interface UpcomingFixture {
   matchId: string
@@ -31,6 +32,8 @@ export interface MemberDetail {
   totalGoalsFor: number
   hasLiveMatch: boolean
   teamRecords: TeamRecord[]
+  /** Qualification status for each of the member's teams. */
+  teamStatuses: Record<TeamCode, TeamStatus>
   upcoming: UpcomingFixture[]
   pointLog: PointEvent[]
   positionHistory: { computedAt: string; rank: number }[]
@@ -97,6 +100,12 @@ export function buildMemberDetail(
 
   const topScorers = aggregateTopScorers(scorers, member.teams)
 
+  const statusMap = getTeamStatusMap(matches)
+  const teamStatuses: Record<TeamCode, TeamStatus> = {}
+  for (const t of member.teams) {
+    teamStatuses[t] = statusMap.get(t) ?? "active"
+  }
+
   return {
     memberId,
     displayName: member.displayName,
@@ -105,6 +114,7 @@ export function buildMemberDetail(
     totalGoalsFor,
     hasLiveMatch,
     teamRecords,
+    teamStatuses,
     upcoming,
     pointLog,
     positionHistory,

@@ -1,5 +1,6 @@
 import Link from "next/link"
-import type { StandingsRow, TeamRecord } from "@/lib/scoring/types"
+import type { StandingsRow, TeamCode, TeamRecord } from "@/lib/scoring/types"
+import type { TeamStatus } from "@/lib/standings/teamStatus"
 import { getMember } from "@/lib/config/members"
 import { Flag } from "./Flag"
 import { LiveDot } from "./LiveDot"
@@ -7,6 +8,7 @@ import { NumberTicker } from "./NumberTicker"
 
 interface LeaderboardRowProps {
   row: StandingsRow
+  statusByTeam: Map<TeamCode, TeamStatus>
 }
 
 function rankStyle(rank: number): {
@@ -55,7 +57,7 @@ function Stat({ label, children, widthClass }: StatProps) {
   )
 }
 
-export function LeaderboardRow({ row }: LeaderboardRowProps) {
+export function LeaderboardRow({ row, statusByTeam }: LeaderboardRowProps) {
   const member = getMember(row.memberId)
   const { color, label, accentHex } = rankStyle(row.rank)
   const isPodium = row.rank <= 3
@@ -90,14 +92,33 @@ export function LeaderboardRow({ row }: LeaderboardRowProps) {
             {member?.displayName ?? row.memberId}
           </div>
           <div className="mt-2 flex gap-2.5 sm:gap-3">
-            {member?.teams.map((t) => (
-              <div key={t} className="flex flex-col items-center gap-1">
-                <Flag team={t} size={22} />
-                <span className="font-display text-[10px] tracking-[0.15em] text-white/55">
-                  {t}
-                </span>
-              </div>
-            ))}
+            {member?.teams.map((t) => {
+              const status = statusByTeam.get(t) ?? "active"
+              const isAlive = status === "alive"
+              const isEliminated = status === "eliminated"
+              const flagWrapperClass = isAlive
+                ? "rounded-sm ring-1 ring-neon-green/70 shadow-[0_0_8px_-2px_rgba(155,255,102,0.6)]"
+                : isEliminated
+                  ? "opacity-40 grayscale"
+                  : ""
+              const codeClass = isEliminated
+                ? "text-white/30 line-through"
+                : isAlive
+                  ? "text-neon-green/80"
+                  : "text-white/55"
+              return (
+                <div key={t} className="flex flex-col items-center gap-1">
+                  <span className={`inline-flex ${flagWrapperClass}`}>
+                    <Flag team={t} size={22} />
+                  </span>
+                  <span
+                    className={`font-display text-[10px] tracking-[0.15em] ${codeClass}`}
+                  >
+                    {t}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
 

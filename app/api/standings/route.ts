@@ -37,5 +37,6 @@ export async function GET() {
     inWindow,
     nextKickoff: next?.utcKickoff ?? null,
     now: now.toISOString(),
+    matches: matches ?? [],
   })
 }
