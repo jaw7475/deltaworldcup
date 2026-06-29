@@ -10,4 +10,4 @@ export const KV_KEYS = {
   topScorers: "scorers:list",
 } as const
 
-export const HISTORY_CAP = 500
+export const HISTORY_CAP = 100

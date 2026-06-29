@@ -103,3 +103,14 @@ export interface StandingsSnapshot {
   computedAt: string
   rows: StandingsRow[]
 }
+
+export interface HistoryRow {
+  memberId: string
+  rank: number
+}
+
+/** Slim per-snapshot record persisted in `standings:history` for the position chart. */
+export interface HistoryEntry {
+  computedAt: string
+  rows: HistoryRow[]
+}

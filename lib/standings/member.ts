@@ -1,10 +1,9 @@
 import { getMember } from "@/lib/config/members"
 import { buildTeamRecord } from "@/lib/scoring/engine"
 import type {
+  HistoryEntry,
   Match,
   PointEvent,
-  StandingsRow,
-  StandingsSnapshot,
   TeamCode,
   TeamRecord,
 } from "@/lib/scoring/types"
@@ -43,7 +42,7 @@ export interface MemberDetail {
 export function buildMemberDetail(
   memberId: string,
   matches: Match[],
-  history: StandingsSnapshot[],
+  history: HistoryEntry[],
   scorers: TopScorers
 ): MemberDetail | null {
   const member = getMember(memberId)
@@ -92,7 +91,7 @@ export function buildMemberDetail(
 
   const positionHistory: { computedAt: string; rank: number }[] = []
   for (const snap of history) {
-    const row = snap.rows.find((r: StandingsRow) => r.memberId === memberId)
+    const row = snap.rows.find((r) => r.memberId === memberId)
     if (row) {
       positionHistory.push({ computedAt: snap.computedAt, rank: row.rank })
     }
