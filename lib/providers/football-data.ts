@@ -166,14 +166,32 @@ export class FootballDataApiProvider implements FootballDataProvider {
       const wentToExtraTime = !!et && et.home !== null && et.away !== null
       const wentToPenalties = !!pens && pens.home !== null && pens.away !== null
 
+      // football-data.org rolls the shootout into `score.fullTime` for PK
+      // matches (e.g. a 1-1(4-3) match returns fullTime 5-4). Our `fullTime`
+      // must be end-of-ET-if-played-else-90 with shootout goals stripped —
+      // it's what feeds the GF tiebreaker. Subtract the penalty shootout
+      // score when present.
+      const ftHome =
+        ft && ft.home !== null && ft.away !== null
+          ? wentToPenalties && pens && pens.home !== null && pens.away !== null
+            ? ft.home - pens.home
+            : ft.home
+          : null
+      const ftAway =
+        ft && ft.home !== null && ft.away !== null
+          ? wentToPenalties && pens && pens.home !== null && pens.away !== null
+            ? ft.away - pens.away
+            : ft.away
+          : null
+
       const fullTime =
-        status === "FINISHED" && ft && ft.home !== null && ft.away !== null
-          ? { home: ft.home, away: ft.away }
+        status === "FINISHED" && ftHome !== null && ftAway !== null
+          ? { home: ftHome, away: ftAway }
           : undefined
 
       const currentScore =
-        ft && ft.home !== null && ft.away !== null
-          ? { home: ft.home, away: ft.away }
+        ftHome !== null && ftAway !== null
+          ? { home: ftHome, away: ftAway }
           : { home: 0, away: 0 }
 
       const winner =
