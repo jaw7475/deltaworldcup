@@ -64,11 +64,18 @@ export function getTeamStatusMap(matches: Match[]): Map<TeamCode, TeamStatus> {
   for (const g of completeGroups) {
     const sorted = sortByPointsGdGf(g.standings)
     sorted.forEach((s, i) => {
-      if (latestKoOutcome.has(s.team)) return
       const rank = i + 1
+      // 3rd-place teams always enter the global comparison pool, even if
+      // they've since played KO matches. Excluding qualifiers here would
+      // shrink the pool below 8 entries and let non-qualifying 3rds slide
+      // into a top-8 slot that never opened up.
+      if (rank === 3) {
+        thirdPlaceStandings.push(s)
+        return
+      }
+      if (latestKoOutcome.has(s.team)) return
       if (rank === 1 || rank === 2) result.set(s.team, "alive")
       else if (rank === 4) result.set(s.team, "eliminated")
-      else if (rank === 3) thirdPlaceStandings.push(s)
     })
   }
 

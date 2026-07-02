@@ -265,6 +265,47 @@ describe("getTeamStatusMap", () => {
     }
   })
 
+  it("keeps non-qualifying 3rd-place teams eliminated even after best-third qualifiers have played KO matches", () => {
+    // 9 groups of 4 with the same 3rd-place ordering as before. Once R32 is
+    // underway, the top-8 3rd-place teams (i=0..7, i.e. "0C".."7C") are all in
+    // the KO bracket. The worst 3rd-place team ("8C") did NOT qualify and
+    // should still be marked eliminated once every group is decided —
+    // regardless of what happened in KO to the 8 that did qualify.
+    const matches: Match[] = []
+    for (let i = 0; i < 9; i++) {
+      const N = 9 - i
+      const A = `${i}A`, B = `${i}B`, C = `${i}C`, D = `${i}D`
+      matches.push(
+        ...fullGroup(`G${i}`, [
+          [A, B, 1, 0],
+          [A, C, 1, 0],
+          [A, D, 1, 0],
+          [B, C, 1, 0],
+          [B, D, 1, 0],
+          [C, D, N, 0],
+        ])
+      )
+    }
+    // Send each of the top-8 3rd-place teams into a KO match so they have a
+    // latestKoOutcome — a mix of wins and losses to guard against the pool
+    // only counting one flavor.
+    for (let i = 0; i < 8; i++) {
+      matches.push(
+        koMatch({
+          id: `r32-${i}`,
+          stage: "R32",
+          utcKickoff: `2026-07-01T${String(i).padStart(2, "0")}:00:00Z`,
+          home: `${i}C`,
+          away: `X${i}`, // opaque opponent; only the KO outcome for iC matters here
+          hGoals: i % 2 === 0 ? 2 : 0,
+          aGoals: i % 2 === 0 ? 0 : 2,
+        })
+      )
+    }
+    const status = getTeamStatusMap(matches)
+    expect(status.get("8C")).toBe("eliminated")
+  })
+
   it("treats a team mid-group-stage with no decisive results as active", () => {
     const matches = partialGroup(
       "A",
