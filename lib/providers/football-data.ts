@@ -96,6 +96,35 @@ const TLA_REMAP: Record<string, string> = {
   URY: "URU",
 }
 
+// Manual corrections for individual matches that football-data.org is serving
+// in a broken state. Keyed by football-data match id; the partial is merged
+// over the normalized Match AFTER mapping, so the fix is re-applied on every
+// sync (a raw KV patch would be clobbered by the next refresh).
+//
+// REMOVE an entry once football-data.org repairs the underlying record — verify
+// by re-checking the raw /matches payload for that id.
+//
+// 537382 — R16 Switzerland vs Colombia (2026-07-07). The tie went to a penalty
+// shootout that Switzerland won (Colombia eliminated), but football-data froze
+// the record as FINISHED mid-shootout: `winner` null, penalties tied 3-3, and
+// an impossible non-draw fullTime. A null winner makes `getTeamStatusMap` skip
+// the match (Colombia stuck on "active") and makes the scoring engine credit
+// Switzerland a 1pt pens-loss instead of a 3pt KO win. We force the known
+// outcome. `winner: "SUI"` is the load-bearing, certain correction; the
+// scoreline (level after ET, SUI on penalties) is a best-effort reconstruction
+// of the corrupt record — adjust here if the true score is confirmed.
+const MATCH_OVERRIDES: Record<string, Partial<Match>> = {
+  "537382": {
+    status: "FINISHED",
+    winner: "SUI",
+    fullTime: { home: 0, away: 0 },
+    currentScore: { home: 0, away: 0 },
+    penalties: { home: 4, away: 3 },
+    wentToExtraTime: true,
+    wentToPenalties: true,
+  },
+}
+
 const STAGE_MAP: Record<string, Stage> = {
   GROUP_STAGE: "GROUP",
   ROUND_OF_32: "R32",
@@ -203,7 +232,7 @@ export class FootballDataApiProvider implements FootballDataProvider {
               : null
           : null
 
-      return {
+      const base: Match = {
         id: String(m.id),
         stage,
         utcKickoff: m.utcDate,
@@ -221,6 +250,9 @@ export class FootballDataApiProvider implements FootballDataProvider {
         wentToPenalties,
         winner,
       }
+
+      const override = MATCH_OVERRIDES[base.id]
+      return override ? { ...base, ...override } : base
     })
   }
 

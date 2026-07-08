@@ -78,6 +78,39 @@ describe("FootballDataApiProvider.fetchAllMatches", () => {
     expect(match.currentScore).toEqual({ home: 2, away: 1 })
   })
 
+  // football-data froze match 537382 (R16 SUI vs COL) as FINISHED mid-shootout
+  // with a null winner, which stranded Colombia on "active" and mis-scored
+  // Switzerland. The MATCH_OVERRIDES entry forces the known outcome; remove that
+  // override (and this test) once upstream repairs the record.
+  it("applies the manual override for the broken SUI vs COL R16 record", async () => {
+    mockFetchOnce({
+      matches: [
+        {
+          id: 537382,
+          utcDate: "2026-07-07T20:00:00Z",
+          status: "FINISHED",
+          stage: "LAST_16",
+          homeTeam: { tla: "SUI" },
+          awayTeam: { tla: "COL" },
+          score: {
+            winner: null, // upstream never resolved the shootout winner
+            duration: "PENALTY_SHOOTOUT",
+            fullTime: { home: 4, away: 3 },
+            penalties: { home: 3, away: 3 },
+          },
+        },
+      ],
+    })
+
+    const provider = new FootballDataApiProvider("test-token")
+    const [match] = await provider.fetchAllMatches()
+
+    expect(match.winner).toBe("SUI")
+    expect(match.status).toBe("FINISHED")
+    expect(match.wentToPenalties).toBe(true)
+    expect(match.fullTime).toEqual({ home: 0, away: 0 })
+  })
+
   it("leaves fullTime untouched for ET-decided matches (no shootout)", async () => {
     mockFetchOnce({
       matches: [
